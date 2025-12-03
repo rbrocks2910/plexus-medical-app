@@ -43,12 +43,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 responseSchema: guiderAdviceSchema,
             }
         });
-
-        if (!response.text) {
-            throw new Error('No response text received from AI');
-        }
-
-        res.status(200).json(JSON.parse(response.text));
+        
+        res.status(200).json(JSON.parse(response.text || '{}'));
 
     } catch (error) {
         console.error("Error in /api/getGuiderAdvice:", error);

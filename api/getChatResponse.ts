@@ -26,13 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         });
 
-        const rawText = response.text;
-        if (!rawText) {
-            throw new Error('No response text received from AI');
-        }
-
+        const rawText = response.text || '';
         const match = rawText.match(/^\[(.*?)\]\s*(.*)/s);
-
+        
         let result: { text: string; emotionalState: string };
         if (match) {
             result = { emotionalState: match[1], text: match[2].trim() };

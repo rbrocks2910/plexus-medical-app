@@ -3,7 +3,7 @@
  * @description This file handles loading the disease databases by directly importing them,
  * making them part of the serverless function bundle.
  */
-import diseaseDB from '../_db/diseases.json';
+import diseaseDB from '../_db/diseases.json' with { type: 'json' };
 
 /**
  * Loads and caches all disease database JSON files.

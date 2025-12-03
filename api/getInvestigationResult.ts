@@ -43,7 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 responseSchema: investigationReportSchema,
             }
         });
-        
+
+        if (!reportResponse.text) {
+            throw new Error('No response text received from AI');
+        }
+
         // Explicitly type the parsed JSON to ensure type safety
         const reportData = JSON.parse(reportResponse.text) as ReportData;
 

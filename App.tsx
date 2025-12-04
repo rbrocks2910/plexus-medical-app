@@ -25,11 +25,11 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/context/AuthContext';
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './src/context/AppContext';
 import { LoginScreen } from './src/components/screens/LoginScreen';
-import { HomeScreen } from './components/screens/HomeScreen';
-import { CaseScreen } from './components/screens/CaseScreen';
-import { FeedbackScreen } from './components/screens/FeedbackScreen';
+import { HomeScreen } from './src/components/screens/HomeScreen';
+import { CaseScreen } from './src/components/screens/CaseScreen';
+import { FeedbackScreen } from './src/components/screens/FeedbackScreen';
 import { ProtectedRoute } from './src/components/ui/ProtectedRoute';
 
 const App: React.FC = () => {

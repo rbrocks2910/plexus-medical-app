@@ -1,17 +1,24 @@
 /**
  * @file db.ts
- * @description This file handles loading the disease databases by directly importing them,
- * making them part of the serverless function bundle.
+ * @description This file handles loading the disease databases using fs.readFileSync
+ * for compatibility with Vercel serverless functions.
  */
-import diseaseDB from '../_db/diseases.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 /**
  * Loads and caches all disease database JSON files.
- * This is now a synchronous function as the JSON files are bundled at build time.
+ * Uses fs.readFileSync for Vercel compatibility instead of import assertions.
  * @returns The combined disease database.
  */
 export const loadAllDiseaseDBs = (): Record<string, { name: string; rarity: string }[]> => {
-    // The import is handled by the bundler, so we can just return the imported object.
-    // This is more efficient and reliable than fetching files at runtime.
-    return diseaseDB;
+  try {
+    // In Vercel serverless functions, files are available relative to the function
+    const filePath = join(process.cwd(), 'api/_db/diseases.json');
+    const fileContent = readFileSync(filePath, 'utf-8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error('Error loading disease database:', error);
+    return {};
+  }
 };

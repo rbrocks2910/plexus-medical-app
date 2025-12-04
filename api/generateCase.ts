@@ -107,7 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 seed: Math.floor(Math.random() * 1000000),
             }
         });
-        const caseData = JSON.parse(response.text);
+        const caseData = JSON.parse(response.text || '{}');
+
+        if (!caseData || typeof caseData !== 'object') {
+            throw new Error('Invalid AI response: expected JSON object');
+        }
 
         if (caseData.underlyingDiagnosis !== selectedDisease.name) {
              caseData.underlyingDiagnosis = selectedDisease.name;

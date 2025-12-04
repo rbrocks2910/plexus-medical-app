@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         });
         
-        res.status(200).json(JSON.parse(response.text));
+        res.status(200).json(JSON.parse(response.text || '{}'));
 
     } catch (error) {
         console.error("Error in /api/getCaseFeedback:", error);

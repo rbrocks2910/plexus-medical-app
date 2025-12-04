@@ -13,7 +13,7 @@ import {
   GoogleAuthProvider
 } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
-import { User, AuthContextType, UserUsageStats } from '../../types';
+import { User, AuthContextType, UserUsageStats } from '../types';
 
 // Rate limiting constants
 const RATE_LIMITS = {
@@ -116,7 +116,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setIsLoading(true);
       setError(null);
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      // Immediately set user state from the sign-in result
+      const userData = convertFirebaseUser(result.user);
+      setUser(userData);
+      setError(null);
+      // Save to localStorage
+      localStorage.setItem('plexus_user', JSON.stringify(userData));
       // Reset loading state immediately after successful sign-in
       setIsLoading(false);
     } catch (error) {

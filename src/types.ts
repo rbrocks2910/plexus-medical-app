@@ -101,3 +101,37 @@ export interface UserProgress {
   averageConfidence: number;
   correctDiagnosisRate: number;
 }
+
+// User usage statistics for rate limiting and analytics
+export interface UserUsageStats {
+  casesGeneratedToday: number;
+  casesGeneratedThisWeek: number;
+  lastCaseGeneratedAt: Date;
+  totalCasesGenerated: number;
+  apiRequestsToday: number;
+  apiRequestsThisHour: number;
+}
+
+// User profile information
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  emailVerified: boolean;
+  createdAt: Date;
+  lastLoginAt: Date;
+  isBanned: boolean;
+  usageStats: UserUsageStats;
+}
+
+// Authentication context type
+export interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  updateUserStats: (stats: Partial<UserUsageStats>) => Promise<void>;
+  checkRateLimit: (action: 'case_generation' | 'api_request') => Promise<{ allowed: boolean; remaining: number; resetTime: Date }>;
+}

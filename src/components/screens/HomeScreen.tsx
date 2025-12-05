@@ -1,12 +1,6 @@
 /**
  * @file HomeScreen.tsx
- * @description This component serves as the landing page for the Plexus application.
- * Its primary functions are:
- * 1.  Displaying the application's branding and mission statement.
- * 2.  Allowing the user to select a medical specialty for the simulation.
- * 3.  Initiating the case generation process by calling the `startNewCase` function from the AppContext.
- * 4.  Navigating the user to the `CaseScreen` once a new case has been successfully created.
- * 5.  Displaying a loading overlay and error messages related to the case generation process.
+ * @description Landing page with authentication status and simulation setup.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -18,68 +12,105 @@ import { Card } from '../ui/Card';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import { CASE_GENERATION_TIPS } from '../../constants/loadingMessages';
 
-// A simple decorative SVG component for the background heartbeat wave effect.
-// Its purpose is purely aesthetic, adding a subtle medical theme and visual interest to the landing page.
+// 1. ADD THIS IMPORT <---
+import { useAuth } from '../../context/AuthContext';
+
 const HeartbeatWave: React.FC<{ className?: string }> = ({ className }) => (
-    <svg className={className} viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M0,10 H20 L25,5 L30,15 L35,8 L40,10 H100" />
-    </svg>
+  <svg className={className} viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M0,10 H20 L25,5 L30,15 L35,8 L40,10 H100" />
+  </svg>
 );
 
 export const HomeScreen: React.FC = () => {
-  // State for the currently selected specialty. Defaults to 'General Medicine'.
   const [specialty, setSpecialty] = useState<Specialty>(Specialty['General Medicine']);
-  // State for the currently selected case rarity. Defaults to 'Any'.
   const [rarity, setRarity] = useState<RaritySelection>('Any');
-  // State to control the visibility of the specialty selection modal.
   const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false);
-  // Accessing global state and functions from the AppContext.
   const { startNewCase, state } = useAppContext();
-  // Hook for programmatic navigation.
   const navigate = useNavigate();
-  // State to manage the currently displayed quote in the footer.
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  // Effect hook to cycle through the medical quotes/tips in the footer.
-  // This adds a bit of personality and provides useful information to the user while they are on the home screen.
+  // 2. ADD AUTH LOGIC HERE <---
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // The ProtectedRoute will handle the redirect to /login automatically
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
   useEffect(() => {
-    setQuoteIndex(Math.floor(Math.random() * CASE_GENERATION_TIPS.length)); // Start with a random quote.
+    setQuoteIndex(Math.floor(Math.random() * CASE_GENERATION_TIPS.length));
     const quoteInterval = setInterval(() => {
       setQuoteIndex(prevIndex => {
         let newIndex;
         do {
           newIndex = Math.floor(Math.random() * CASE_GENERATION_TIPS.length);
-        } while (newIndex === prevIndex && CASE_GENERATION_TIPS.length > 1); // Ensure new quote is different.
+        } while (newIndex === prevIndex && CASE_GENERATION_TIPS.length > 1);
         return newIndex;
       });
     }, 8000);
     return () => clearInterval(quoteInterval);
   }, []);
 
-  // Handler function for the "Begin Simulation" button.
   const handleStartCase = async () => {
-    // Calls the `startNewCase` function from AppContext, which triggers the API call and global loading state.
     const newCase = await startNewCase(specialty, rarity);
-    // If the case is created successfully, navigate to the CaseScreen for that specific case ID.
     if (newCase) {
       navigate(`/case/${newCase.id}`);
     }
   };
 
-  // Handler for selecting a specialty from the modal.
   const handleSpecialtySelect = (selectedSpecialty: Specialty) => {
     setSpecialty(selectedSpecialty);
-    setIsSpecialtyModalOpen(false); // Close the modal after selection.
+    setIsSpecialtyModalOpen(false);
   };
 
   return (
     <>
-      {/* Conditionally render the LoadingOverlay based on the global `isLoading` state from AppContext. */}
       {state.isLoading && <LoadingOverlay title="Preparing Simulation" messages={CASE_GENERATION_TIPS} />}
       
-      {/* Main container with animated gradient background and a subtle heartbeat SVG for visual appeal. */}
       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-plexus-blue to-plexus-accent bg-[200%_200%] animate-gradient relative overflow-hidden">
-        {/* The decorative background wave. It's set to a large size and pulses gently to create atmosphere. */}
+        
+        {/* 3. ADD THIS HEADER SECTION <--- */}
+        {/* We use 'absolute top-0' so it sits on top of the gradient without pushing the center content down */}
+        <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+          {/* Small Logo (Optional, can be hidden since you have the big one in center) */}
+          <div className="flex items-center gap-2 text-white/80">
+            <div className="w-6 h-6 border border-white/40 rounded flex items-center justify-center text-xs font-bold">P</div>
+            <span className="font-semibold tracking-wide text-sm">PLEXUS</span>
+          </div>
+
+          {/* User Profile & Logout */}
+          <div className="flex items-center gap-4">
+            {/* User Info */}
+            <div className="hidden md:flex flex-col items-end text-white">
+              <span className="text-sm font-medium">{user?.displayName || 'Medical Professional'}</span>
+              <span className="text-xs text-white/60">{user?.email}</span>
+            </div>
+
+            {/* Avatar */}
+            <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-sm overflow-hidden">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.displayName?.charAt(0) || 'U'}</span>
+              )}
+            </div>
+
+            {/* Logout Button */}
+            <button 
+              onClick={handleLogout}
+              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all"
+            >
+              Log Out
+            </button>
+          </div>
+        </header>
+        {/* --- END HEADER SECTION --- */}
+
+
         <HeartbeatWave className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-none text-white/10 animate-pulse-heart" />
         
         {/* Main Branding Section */}
@@ -94,7 +125,6 @@ export const HomeScreen: React.FC = () => {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Medical Speciality
               </label>
-              {/* This button doesn't submit a form, but opens the specialty selection modal. */}
               <button
                 onClick={() => setIsSpecialtyModalOpen(true)}
                 className="w-full flex justify-between items-center text-left p-3 bg-white/20 border border-white/30 rounded-lg hover:bg-white/30 focus:ring-4 focus:ring-plexus-accent/50 transition-all ease-plexus-ease text-white"
@@ -102,7 +132,6 @@ export const HomeScreen: React.FC = () => {
                 aria-expanded={isSpecialtyModalOpen}
               >
                 <span>{specialty}</span>
-                {/* Chevron icon to indicate it's a dropdown-like button. */}
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -124,7 +153,6 @@ export const HomeScreen: React.FC = () => {
                 />
             </div>
 
-            {/* The primary call-to-action button to start the simulation. */}
             <button
               onClick={handleStartCase}
               disabled={state.isLoading}
@@ -132,22 +160,16 @@ export const HomeScreen: React.FC = () => {
             >
               Begin Simulation
             </button>
-            {/* Display error message from AppContext if case generation fails, providing user feedback. */}
             {state.error && <p className="text-red-300 text-sm mt-2 text-center">{state.error}</p>}
         </div>
 
-        {/* Footer with cycling quotes for an engaging user experience, making waiting times feel shorter and more interesting. */}
         <footer className="absolute bottom-4 right-4 text-white/60 text-sm max-w-xs text-right">
-            {/* The `key` prop is crucial here. Changing the key forces React to re-mount the component, which re-triggers the `animate-fade-in` animation for each new quote. */}
             <p key={quoteIndex} className="italic animate-fade-in">{CASE_GENERATION_TIPS[quoteIndex]}</p>
         </footer>
 
-        {/* The Specialty Selection Modal, rendered conditionally based on the `isSpecialtyModalOpen` state. */}
         {isSpecialtyModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fade-in" role="dialog" aria-modal="true">
-            {/* The Card component provides a consistent, styled container for the modal content. */}
             <Card className="w-full max-w-lg relative bg-white/90 backdrop-blur-md">
-              {/* Close button for the modal. */}
               <button
                   onClick={() => setIsSpecialtyModalOpen(false)}
                   className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-plexus-accent"
@@ -158,7 +180,6 @@ export const HomeScreen: React.FC = () => {
                   </svg>
               </button>
               <h2 className="text-2xl font-bold text-plexus-blue mb-6 text-center">Select a Speciality</h2>
-              {/* Grid layout for the specialty buttons, providing a clear and easy-to-tap interface. */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {SPECIALTIES.map((s) => {
                   const isSelected = specialty === s;
@@ -166,8 +187,6 @@ export const HomeScreen: React.FC = () => {
                     <button
                       key={s}
                       onClick={() => handleSpecialtySelect(s)}
-                      // Dynamic classes are used to visually highlight the currently selected specialty and provide hover feedback.
-                      // This makes the UI feel responsive and intuitive.
                       className={`
                         p-3 rounded-lg text-center font-medium transition-all duration-200 ease-plexus-ease border-2
                         flex items-center justify-center text-sm

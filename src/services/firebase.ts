@@ -4,15 +4,17 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 // Firebase configuration
 // You'll need to replace these with your actual Firebase project config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your-api-key-here",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBUfcB8twN2wwhw5tFuZUG0ldLRtU6k5sU",
+  authDomain: "plexus-medical-app-20c07.firebaseapp.com",
+  projectId: "plexus-medical-app-20c07",
+  storageBucket: "plexus-medical-app-20c07.firebasestorage.app",
+  messagingSenderId: "259815336360",
+  appId: "1:259815336360:web:ca6cbf9080772a545c159d",
+  measurementId: "G-NEG99LZ9D7"
 };
 
 // Initialize Firebase
+
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service

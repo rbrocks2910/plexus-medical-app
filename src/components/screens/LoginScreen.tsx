@@ -7,7 +7,9 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
-
+import { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+// Verify this path
 // Medical-themed loading messages for authentication
 const AUTH_LOADING_MESSAGES = [
   "Verifying medical credentials...",
@@ -19,8 +21,19 @@ const AUTH_LOADING_MESSAGES = [
 ];
 
 export const LoginScreen: React.FC = () => {
-  const { signInWithGoogle, isLoading, error } = useAuth();
+  const { signInWithGoogle, isLoading, error, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Watch for the 'user' to become available, then redirect
+  useEffect(() => {
+    if (user) {
+      // If we were redirected here from a specific page (like /case/1), go back there.
+      // Otherwise, go to the Home screen ('/').
+      const origin = (location.state as any)?.from?.pathname || '/';
+      navigate(origin, { replace: true });
+    }
+  }, [user, navigate, location]);
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
   };

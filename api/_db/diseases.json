@@ -17,10 +17,14 @@
     { "name": "Hypertensive heart disease", "rarity": "Common" },
     { "name": "Vasovagal syncope", "rarity": "Common" },
 <<<<<<< HEAD
+<<<<<<< HEAD
     { "name": "Prinzmetal's angina (vasospastic angina)", "rarity": "Uncommon" },
 =======
     { "name": "Prinzmetal’s angina (vasospastic angina)", "rarity": "Uncommon" },
 >>>>>>> 1e8459591aaa447333568af74bb396b1d0284810
+=======
+    { "name": "Prinzmetal's angina (vasospastic angina)", "rarity": "Uncommon" },
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     { "name": "Myocardial infarction with non-obstructive coronary arteries (MINOCA)", "rarity": "Uncommon" },
     { "name": "Wolff-Parkinson-White syndrome", "rarity": "Uncommon" },
     { "name": "Ventricular tachycardia", "rarity": "Uncommon" },
@@ -42,10 +46,14 @@
     { "name": "Peripartum cardiomyopathy", "rarity": "Rare" },
     { "name": "Cardiac sarcoidosis", "rarity": "Rare" },
 <<<<<<< HEAD
+<<<<<<< HEAD
     { "name": "Ebstein's anomaly", "rarity": "Rare" },
 =======
     { "name": "Ebstein’s anomaly", "rarity": "Rare" },
 >>>>>>> 1e8459591aaa447333568af74bb396b1d0284810
+=======
+    { "name": "Ebstein's anomaly", "rarity": "Rare" },
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     { "name": "Tetralogy of Fallot", "rarity": "Rare" },
     { "name": "Transposition of the great arteries (TGA)", "rarity": "Rare" },
     { "name": "Spontaneous coronary artery dissection (SCAD)", "rarity": "Rare" },
@@ -58,6 +66,9 @@
     { "name": "Carcinoid heart disease", "rarity": "Very Rare" },
     { "name": "Pulmonary veno-occlusive disease (PVOD)", "rarity": "Very Rare" },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     { "name": "Cardiac angiosarcoma", "rarity": "Very Rare" },
     { "name": "Atherosclerosis", "rarity": "Common" },
     { "name": "Stable Angina Pectoris", "rarity": "Common" },
@@ -251,9 +262,12 @@
     { "name": "Absence of Pulmonary Valve", "rarity": "Very Rare" },
     { "name": "Common Atrioventricular Canal Defect (AVCD)", "rarity": "Common" },
     { "name": "Interrupted Inferior Vena Cava", "rarity": "Rare" }
+<<<<<<< HEAD
 =======
     { "name": "Cardiac angiosarcoma", "rarity": "Very Rare" }
 >>>>>>> 1e8459591aaa447333568af74bb396b1d0284810
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
   ],
   "Pulmonology": [
     { "name": "Acute Bronchitis", "rarity": "Very Common" },
@@ -291,6 +305,9 @@
     { "name": "Lymphangioleiomyomatosis (LAM)", "rarity": "Very Rare" },
     { "name": "Pulmonary Alveolar Proteinosis (PAP)", "rarity": "Very Rare" },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     { "name": "Pulmonary Veno-occlusive Disease (PVOD)", "rarity": "Very Rare" },
     { "name": "Asthma (Chronic)", "rarity": "Very Common" },
     { "name": "Acute Asthma Exacerbation", "rarity": "Common" },
@@ -2155,6 +2172,7 @@
       { "name": "Chronic Actinic Dermatosis", "rarity": "Uncommon" },
       { "name": "Schamberg's Disease (Progressive Pigmentary Dermatosis)", "rarity": "Uncommon" },
       { "name": "Acquired Epidermodysplasia Verruciformis", "rarity": "Rare" }
+<<<<<<< HEAD
 =======
     { "name": "Pulmonary Veno-occlusive Disease (PVOD)", "rarity": "Very Rare" }
   ],
@@ -2370,6 +2388,8 @@
       { "name": "Scleroderma (Morphea)", "rarity": "Rare" },
       { "name": "Harlequin Ichthyosis", "rarity": "Very Rare" }
 >>>>>>> 1e8459591aaa447333568af74bb396b1d0284810
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     ],
     "Infectious Disease": [
       { "name": "Influenza", "rarity": "Very Common" },
@@ -2389,6 +2409,9 @@
       { "name": "Iron Deficiency Anemia", "rarity": "Very Common" },
       { "name": "Vitamin B12 Deficiency Anemia", "rarity": "Common" },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
       { "name": "Folate Deficiency Anemia", "rarity": "Common" },
       { "name": "Anemia of Chronic Disease", "rarity": "Common" },
       { "name": "Autoimmune Hemolytic Anemia", "rarity": "Common" },
@@ -2930,6 +2953,7 @@
       { "name": "Osteogenesis Imperfecta Type II", "rarity": "Rare" },
       { "name": "Osteogenesis Imperfecta Type III", "rarity": "Rare" },
       { "name": "Osteogenesis Imperfecta Type IV", "rarity": "Rare" }
+<<<<<<< HEAD
 =======
       { "name": "Sickle Cell Anemia", "rarity": "Uncommon" },
       { "name": "Thalassemia", "rarity": "Uncommon" },
@@ -2954,5 +2978,7 @@
       { "name": "Osteosarcoma", "rarity": "Rare" },
       { "name": "Fibrous Dysplasia", "rarity": "Very Rare" }
 >>>>>>> 1e8459591aaa447333568af74bb396b1d0284810
+=======
+>>>>>>> cb3d4d0cfd7365fc3b79d6144eee935cf4fd62c2
     ]
 }

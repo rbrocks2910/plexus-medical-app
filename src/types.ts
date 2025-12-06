@@ -111,8 +111,8 @@ export interface Subscription {
   startDate: Date;
   endDate: Date | null; // null for free tier
   isActive: boolean;
-  casesUsedToday: number;
-  maxCasesPerDay: number;
+  totalCasesUsed: number;
+  maxTotalCases: number;
 }
 
 // User usage statistics for rate limiting and analytics

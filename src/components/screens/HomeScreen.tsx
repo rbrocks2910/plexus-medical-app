@@ -70,15 +70,15 @@ export const HomeScreen: React.FC = () => {
     if (newCase) {
       // Update subscription stats after successful case generation
       if (user?.usageStats.subscription) {
-        const newCasesUsed = (user.usageStats.subscription.casesUsedToday || 0) + 1;
+        const newTotalCasesUsed = (user.usageStats.subscription.totalCasesUsed || 0) + 1;
         await updateSubscription({
-          casesUsedToday: newCasesUsed
+          totalCasesUsed: newTotalCasesUsed
         });
 
-        // Update the last generated date
+        // Update the last generated date and total case count
         await updateUserStats({
           lastCaseGeneratedAt: new Date(),
-          casesGeneratedToday: (user.usageStats.casesGeneratedToday || 0) + 1
+          totalCasesGenerated: (user.usageStats.totalCasesGenerated || 0) + 1
         });
       }
       navigate(`/case/${newCase.id}`);
@@ -199,15 +199,6 @@ export const HomeScreen: React.FC = () => {
                 />
             </div>
 
-            {/* Case usage indicator - subtle and clean */}
-            {user?.usageStats.subscription && (
-              <div className="text-center mb-2">
-                <span className="text-white/80 text-sm">
-                  {user.usageStats.subscription.casesUsedToday} of {user.usageStats.subscription.maxCasesPerDay} cases today used
-                </span>
-              </div>
-            )}
-
             <button
               onClick={handleStartCase}
               disabled={state.isLoading || (user ? !user.usageStats.subscription?.isActive || user.usageStats.subscription.casesUsedToday >= user.usageStats.subscription.maxCasesPerDay : true)}
@@ -220,7 +211,7 @@ export const HomeScreen: React.FC = () => {
               } font-bold py-3 px-4 rounded-lg text-lg hover:bg-gray-200 focus:outline-none focus:ring-4 focus:ring-white/50 transition-all duration-300 ease-plexus-ease disabled:cursor-wait flex items-center justify-center transform hover:scale-105`}
             >
               {user && user.usageStats.subscription && user.usageStats.subscription.casesUsedToday >= user.usageStats.subscription.maxCasesPerDay
-                ? "Today's Cases Used"
+                ? "Upgrade to Continue"
                 : "Begin Simulation"
               }
             </button>

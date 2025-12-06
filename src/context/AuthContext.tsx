@@ -26,7 +26,7 @@ const DEFAULT_RATE_LIMITS = {
 // Subscription limits for case generation
 const SUBSCRIPTION_LIMITS = {
   free: {
-    daily: 1,    // 1 case per day for free users
+    total: 2,    // 2 total cases for free users
   },
   premium: {
     daily: 30,   // 30 cases per day for premium users
@@ -45,8 +45,8 @@ const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
     startDate: now,
     endDate: null,
     isActive: true,
-    casesUsedToday: 0,
-    maxCasesPerDay: SUBSCRIPTION_LIMITS.free.daily,
+    totalCasesUsed: 0,
+    maxTotalCases: SUBSCRIPTION_LIMITS.free.total,
   };
 
   return {
@@ -214,8 +214,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // In a real app, this would be handled by your payment system
       endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
       isActive: true,
-      casesUsedToday: 0, // Reset today's count on subscription
-      maxCasesPerDay: SUBSCRIPTION_LIMITS.premium.daily,
+      totalCasesUsed: user.usageStats.subscription?.totalCasesUsed || 0, // Keep any previously used cases
+      maxTotalCases: SUBSCRIPTION_LIMITS.premium.daily, // Premium users get daily cases
     };
 
     const updatedUser = {
@@ -282,30 +282,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const now = new Date();
     const subscription = user.usageStats.subscription;
-    const currentDay = now.toDateString();
-    const lastGeneratedDay = user.usageStats.lastCaseGeneratedAt.toDateString();
 
-    // If it's a new day, reset the casesUsedToday counter
-    if (lastGeneratedDay !== currentDay) {
-      // Update the subscription's casesUsedToday to 0
-      await updateSubscription({ casesUsedToday: 0 });
+    // For free users, check total cases used
+    if (subscription.tier === 'free') {
+      const remaining = subscription.maxTotalCases - subscription.totalCasesUsed;
+      const allowed = remaining > 0;
 
-      // Also reset the casesGeneratedToday counter
-      await updateUserStats({ casesGeneratedToday: 0, lastCaseGeneratedAt: new Date(0) });
-
-      // Update the last generated date to today so the check works properly
-      subscription.casesUsedToday = 0;
+      // Reset time is not applicable for total limit, so we return current time
+      return { allowed, remaining, resetTime: now };
     }
+    // For premium users, check daily limit
+    else {
+      const currentDay = now.toDateString();
+      const lastGeneratedDay = user.usageStats.lastCaseGeneratedAt.toDateString();
 
-    const remaining = subscription.maxCasesPerDay - subscription.casesUsedToday;
-    let allowed = remaining > 0;
+      // If it's a new day, reset the casesUsedToday counter (for premium users)
+      if (lastGeneratedDay !== currentDay) {
+        // For premium users, we use casesGeneratedToday in the usageStats as daily counter
+        await updateUserStats({ casesGeneratedToday: 0, lastCaseGeneratedAt: new Date(0) });
+      }
 
-    // Set reset time to next midnight
-    const resetTime = new Date(now);
-    resetTime.setDate(resetTime.getDate() + 1);
-    resetTime.setHours(0, 0, 0, 0);
+      const remaining = subscription.maxTotalCases - user.usageStats.casesGeneratedToday;
+      const allowed = remaining > 0;
 
-    return { allowed, remaining, resetTime };
+      // Set reset time to next midnight for daily premium limit
+      const resetTime = new Date(now);
+      resetTime.setDate(resetTime.getDate() + 1);
+      resetTime.setHours(0, 0, 0, 0);
+
+      return { allowed, remaining, resetTime };
+    }
   };
 
   const value: AuthContextType = {

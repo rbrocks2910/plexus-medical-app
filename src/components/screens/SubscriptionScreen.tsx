@@ -27,11 +27,11 @@ export const SubscriptionScreen: React.FC = () => {
       // In a real app, this would redirect to your payment gateway
       // For now, we'll just simulate the subscription process
       await subscribeToPremium();
-      
+
       // In a real implementation, you would redirect to the payment provider
       // and handle success/failure callbacks
       console.log('Redirecting to payment gateway...');
-      
+
       // For demo purposes, we'll just show a success message
       // In a real app, you might navigate back to home or show confirmation
       navigate('/');
@@ -58,7 +58,6 @@ export const SubscriptionScreen: React.FC = () => {
   }
 
   const isPremium = user.usageStats.subscription?.tier === 'premium';
-  const subscription = user.usageStats.subscription;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-plexus-blue to-plexus-accent relative overflow-hidden">
@@ -72,8 +71,8 @@ export const SubscriptionScreen: React.FC = () => {
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-white mb-2">Subscription Plans</h1>
           <p className="text-white/80 max-w-md mx-auto">
-            {isPremium 
-              ? "Thank you for your premium subscription." 
+            {isPremium
+              ? "Thank you for your Plus subscription."
               : "Choose the plan that fits your needs."}
           </p>
         </div>
@@ -89,29 +88,16 @@ export const SubscriptionScreen: React.FC = () => {
             <h2 className="text-2xl font-bold text-plexus-blue mb-4">Basic</h2>
             <div className="mb-6">
               <span className="text-3xl font-bold text-gray-800">Free</span>
-              <span className="text-gray-500">/month</span>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-center">
                 <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span>1 case per day</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Access to all specialties</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Standard AI responses</span>
+                <span>Practice a case everyday</span>
               </li>
             </ul>
-            <button 
+            <button
               disabled={true}
               className="w-full bg-gray-100 text-gray-500 font-medium py-3 px-4 rounded-lg text-lg transition-all duration-300 disabled:cursor-not-allowed"
             >
@@ -129,7 +115,7 @@ export const SubscriptionScreen: React.FC = () => {
               </div>
             )}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
-            <h2 className="text-2xl font-bold text-plexus-blue mb-4">Pro</h2>
+            <h2 className="text-2xl font-bold text-plexus-blue mb-4">Plus</h2>
             <div className="mb-6">
               <span className="text-3xl font-bold text-gray-800">₹300</span>
               <span className="text-gray-500">/month</span>
@@ -139,25 +125,7 @@ export const SubscriptionScreen: React.FC = () => {
                 <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span>30 cases per day</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Priority case generation</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Advanced AI insights</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Early access to new features</span>
+                <span>Higher case limits</span>
               </li>
             </ul>
             {!isPremium ? (
@@ -168,10 +136,10 @@ export const SubscriptionScreen: React.FC = () => {
                   isLoading ? 'bg-plexus-blue/70' : 'bg-plexus-blue hover:bg-plexus-blue-dark'
                 } text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-plexus-ease transform hover:scale-105`}
               >
-                {isLoading ? 'Processing...' : 'Upgrade to Pro'}
+                {isLoading ? 'Processing...' : 'Upgrade to Plus'}
               </button>
             ) : (
-              <button 
+              <button
                 disabled={true}
                 className="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg text-lg transition-all duration-300 disabled:cursor-not-allowed"
               >
@@ -180,30 +148,6 @@ export const SubscriptionScreen: React.FC = () => {
             )}
           </Card>
         </div>
-
-        {/* Current usage info */}
-        {subscription && (
-          <div className="mt-8 text-center">
-            <Card className="bg-white/80 backdrop-blur-sm p-6 inline-block">
-              <div className="flex items-center justify-center gap-8">
-                <div>
-                  <p className="text-gray-600 text-sm">Cases used today</p>
-                  <p className="text-xl font-bold text-plexus-blue">
-                    {subscription.casesUsedToday} / {subscription.maxCasesPerDay}
-                  </p>
-                </div>
-                {subscription.endDate && (
-                  <div>
-                    <p className="text-gray-600 text-sm">Subscription valid until</p>
-                    <p className="text-xl font-bold text-plexus-blue">
-                      {new Date(subscription.endDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-        )}
 
         {error && (
           <div className="mt-6 text-center">

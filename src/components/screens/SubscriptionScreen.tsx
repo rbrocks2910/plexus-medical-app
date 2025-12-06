@@ -69,43 +69,14 @@ export const SubscriptionScreen: React.FC = () => {
 
       <div className="w-full max-w-4xl z-10">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-white mb-2">Subscription Plans</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Plus Plan</h1>
           <p className="text-white/80 max-w-md mx-auto">
-            {isPremium
-              ? "Thank you for your Plus subscription."
-              : "Choose the plan that fits your needs."}
+            {"Unlock unlimited potential with our premium features"}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Free Plan Card */}
-          <Card className={`bg-white/90 backdrop-blur-md p-6 relative overflow-hidden ${
-            !isPremium ? 'ring-2 ring-plexus-blue/50' : 'opacity-90'
-          }`}>
-            <div className="absolute top-0 right-0 bg-plexus-blue text-white text-xs font-bold px-4 py-1 transform rotate-45 translate-x-4 -translate-y-4">
-              Current
-            </div>
-            <h2 className="text-2xl font-bold text-plexus-blue mb-4">Basic</h2>
-            <div className="mb-6">
-              <span className="text-3xl font-bold text-gray-800">Free</span>
-            </div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Access to core features</span>
-              </li>
-            </ul>
-            <button
-              disabled={true}
-              className="w-full bg-gray-100 text-gray-500 font-medium py-3 px-4 rounded-lg text-lg transition-all duration-300 disabled:cursor-not-allowed"
-            >
-              Current Plan
-            </button>
-          </Card>
-
-          {/* Premium Plan Card */}
+        <div className="flex justify-center">
+          {/* Plus Plan Card Only */}
           <Card className={`bg-white/90 backdrop-blur-md p-6 relative overflow-hidden ${
             isPremium ? 'ring-2 ring-green-500/50' : 'border-2 border-white/30'
           }`}>
@@ -126,6 +97,12 @@ export const SubscriptionScreen: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
                 <span>Higher case limits</span>
+              </li>
+              <li className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Full feature access</span>
               </li>
             </ul>
             {!isPremium ? (

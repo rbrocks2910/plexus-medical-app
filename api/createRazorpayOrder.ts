@@ -3,6 +3,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
 
+// Debug logging to check if environment variables are accessible
+console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
+console.log('RAZORPAY_KEY_SECRET exists:', !!process.env.RAZORPAY_KEY_SECRET);
+console.log('RAZORPAY_KEY_ID length:', process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.length : 'undefined');
+console.log('RAZORPAY_KEY_SECRET length:', process.env.RAZORPAY_KEY_SECRET ? process.env.RAZORPAY_KEY_SECRET.length : 'undefined');
+
+// Validate that environment variables exist before creating Razorpay instance
+if (!process.env.RAZORPAY_KEY_ID) {
+  console.error('Missing RAZORPAY_KEY_ID environment variable');
+}
+if (!process.env.RAZORPAY_KEY_SECRET) {
+  console.error('Missing RAZORPAY_KEY_SECRET environment variable');
+}
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID as string,
   key_secret: process.env.RAZORPAY_KEY_SECRET as string,
@@ -11,6 +25,15 @@ const razorpay = new Razorpay({
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Check environment variables before processing
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error('Razorpay credentials are missing');
+    return res.status(500).json({
+      error: 'Payment configuration error: Missing API credentials',
+      details: 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET not found'
+    });
   }
 
   try {
@@ -40,6 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
+    console.log('Creating Razorpay order with receipt:', receiptId);
     const order = await razorpay.orders.create(options);
 
     // order has: id, amount, currency, status, etc.
@@ -48,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Error creating Razorpay order:', err);
     return res.status(500).json({
       error: 'Failed to create order',
-      details: err?.message,
+      details: err?.message || err?.toString(),
     });
   }
 }

@@ -32,12 +32,13 @@ const DEFAULT_RATE_LIMITS = {
 };
 
 // Subscription limits for case generation
+// ✅ Now both are TOTAL over plan duration, NOT per day
 const SUBSCRIPTION_LIMITS = {
   free: {
     total: 2,    // 2 total cases for free users
   },
   premium: {
-    daily: 30,   // 30 cases per day for premium users
+    total: 30,   // 30 total cases for the entire monthly plan
   }
 };
 
@@ -48,8 +49,8 @@ const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
   const now = new Date();
 
   // Create default free subscription when user is created
-  const defaultSubscription = {
-    tier: 'free' as const,
+  const defaultSubscription: Subscription = {
+    tier: 'free',
     startDate: now,
     endDate: null,
     isActive: true,
@@ -82,7 +83,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unsubscribeFirestore, setUnsubscribeFirestore] = useState<() => void | null>(null);
+  // ✅ fixed typing: function OR null
+  const [unsubscribeFirestore, setUnsubscribeFirestore] =
+    useState<(() => void) | null>(null);
 
   // Firebase auth state listener
   useEffect(() => {
@@ -187,6 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Subscribe to premium tier
+  // ✅ Now sets a TOTAL limit of 30 for the plan duration
   const subscribeToPremium = async () => {
     if (!user) return;
 
@@ -194,15 +198,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const now = new Date();
       // In a real app, you would process payment before updating the subscription
       // For now, we'll just update the subscription to premium
-      const premiumSubscription = {
-        tier: 'premium' as const,
+      const premiumSubscription: Subscription = {
+        tier: 'premium',
         startDate: now.toISOString(), // Firestore compatible date format
         // For demo purposes, set end date to 30 days from now
         // In a real app, this would be handled by your payment system
         endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         isActive: true,
         totalCasesUsed: user.usageStats.subscription?.totalCasesUsed || 0, // Keep any previously used cases
-        maxTotalCases: SUBSCRIPTION_LIMITS.premium.daily, // Premium users get daily cases
+        maxTotalCases: SUBSCRIPTION_LIMITS.premium.total, // ✅ 30 cases total per plan
       };
 
       // Update in Firestore
@@ -214,7 +218,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Check rate limits
-  const checkRateLimit = async (action: 'case_generation' | 'api_request'): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> => {
+  const checkRateLimit = async (
+    action: 'case_generation' | 'api_request'
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> => {
     if (!user) {
       return { allowed: false, remaining: 0, resetTime: new Date() };
     }
@@ -227,7 +233,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (action === 'case_generation') {
       // For case generation, we'll use subscription limits instead of fixed limits
-      // This will be handled by the new canGenerateCase function
       return await canGenerateCase();
     } else if (action === 'api_request') {
       // Check hourly limit
@@ -255,6 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Check if user can generate a case based on subscription limits
+  // ✅ Now uses TOTAL cases (free: 2, premium: 30), no daily reset for premium
   const canGenerateCase = async (): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> => {
     if (!user || !user.usageStats.subscription) {
       return { allowed: false, remaining: 0, resetTime: new Date() };
@@ -263,34 +269,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const now = new Date();
     const subscription = user.usageStats.subscription;
 
-    // For free users, check total cases used
-    if (subscription.tier === 'free') {
-      const remaining = subscription.maxTotalCases - (subscription.totalCasesUsed || 0);
-      const allowed = remaining > 0;
+    // Determine maxTotalCases fallback based on tier
+    const defaultMax =
+      subscription.tier === 'premium'
+        ? SUBSCRIPTION_LIMITS.premium.total
+        : SUBSCRIPTION_LIMITS.free.total;
 
-      // Reset time is not applicable for total limit, so we return current time
-      return { allowed, remaining, resetTime: now };
-    }
-    // For premium users, check daily limit
-    else {
-      const currentDay = now.toDateString();
-      const lastGeneratedDay = new Date(user.usageStats.lastCaseGeneratedAt).toDateString();
+    const maxTotalCases = subscription.maxTotalCases ?? defaultMax;
+    const used = subscription.totalCasesUsed || 0;
+    const remaining = maxTotalCases - used;
+    const allowed = remaining > 0;
 
-      // If it's a new day, reset the casesUsedToday counter (for premium users)
-      if (lastGeneratedDay !== currentDay) {
-        await updateUserStats({ casesGeneratedToday: 0 });
-      }
+    // For total-plan limits, "resetTime" can be the end of the current plan (if set),
+    // otherwise just return now.
+    const resetTime = subscription.endDate ? new Date(subscription.endDate) : now;
 
-      const remaining = (subscription.maxTotalCases || SUBSCRIPTION_LIMITS.premium.daily) - user.usageStats.casesGeneratedToday;
-      const allowed = remaining > 0;
-
-      // Set reset time to next midnight for daily premium limit
-      const resetTime = new Date(now);
-      resetTime.setDate(resetTime.getDate() + 1);
-      resetTime.setHours(0, 0, 0, 0);
-
-      return { allowed, remaining, resetTime };
-    }
+    return { allowed, remaining, resetTime };
   };
 
   const value: AuthContextType = {

@@ -8,8 +8,35 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../ui/Card';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+// Load Razorpay checkout script
+const loadRazorpayScript = () => {
+  return new Promise<boolean>((resolve) => {
+    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const RAZORPAY_KEY_ID =
+  import.meta.env.VITE_RAZORPAY_KEY_ID ||
+  (process.env.REACT_APP_RAZORPAY_KEY_ID as string) ||
+  '';
+
 export const SubscriptionScreen: React.FC = () => {
-  const { user, subscribeToPremium, updateSubscription } = useAuth();
+  const { user, subscribeToPremium } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,20 +51,106 @@ export const SubscriptionScreen: React.FC = () => {
     setError(null);
 
     try {
-      // In a real app, this would redirect to your payment gateway
-      // For now, we'll just simulate the subscription process
-      await subscribeToPremium();
+      // 1. Load Razorpay script
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        setError('Failed to load payment gateway. Please try again.');
+        setIsLoading(false);
+        return;
+      }
 
-      // In a real implementation, you would redirect to the payment provider
-      // and handle success/failure callbacks
-      console.log('Redirecting to payment gateway...');
+      // 2. Create order via backend
+      const orderRes = await fetch('/api/createRazorpayOrder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: 'plus',
+          amount: 30000, // ₹300 in paise
+          currency: 'INR',
+          userId: user.uid,
+        }),
+      });
 
-      // For demo purposes, we'll just show a success message
-      // In a real app, you might navigate back to home or show confirmation
-      navigate('/');
+      if (!orderRes.ok) {
+        throw new Error('Failed to create payment order');
+      }
+
+      const orderData = await orderRes.json();
+
+      // 3. Configure Razorpay options
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Plexus Premium',
+        description: 'Plus Plan - Monthly Subscription',
+        order_id: orderData.id,
+        prefill: {
+          name: user.displayName || 'Plexus User',
+          email: user.email || '',
+        },
+        theme: {
+          color: '#2563EB',
+        },
+        handler: async (response: any) => {
+          try {
+            // 4. Verify payment with backend
+            const verifyRes = await fetch('/api/verifyRazorpayPayment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: 'plus',
+                userId: user.uid,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(
+                verifyData?.message ||
+                  'Payment verification failed. If amount was debited, please contact support.'
+              );
+            }
+
+            // 5. Upgrade user to premium in Firestore
+            await subscribeToPremium();
+
+            navigate('/');
+          } catch (err) {
+            console.error('Verification error:', err);
+            setError(
+              err instanceof Error
+                ? err.message
+                : 'Payment verification failed. Please try again.'
+            );
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsLoading(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+
+      rzp.on('payment.failed', (resp: any) => {
+        console.error('Payment failed:', resp.error);
+        setError(resp.error.description || 'Payment failed. Please try again.');
+        setIsLoading(false);
+      });
+
+      // 6. Open Razorpay checkout
+      rzp.open();
     } catch (err) {
+      console.error('Error during subscription:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -71,15 +184,16 @@ export const SubscriptionScreen: React.FC = () => {
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-white mb-2">Plus Plan</h1>
           <p className="text-white/80 max-w-md mx-auto">
-            {"Unlock unlimited potential with our premium features"}
+            {'Unlock unlimited potential with our premium features'}
           </p>
         </div>
 
         <div className="flex justify-center">
-          {/* Plus Plan Card Only */}
-          <Card className={`bg-white/90 backdrop-blur-md p-6 relative overflow-hidden ${
-            isPremium ? 'ring-2 ring-green-500/50' : 'border-2 border-white/30'
-          }`}>
+          <Card
+            className={`bg-white/90 backdrop-blur-md p-6 relative overflow-hidden ${
+              isPremium ? 'ring-2 ring-green-500/50' : 'border-2 border-white/30'
+            }`}
+          >
             {isPremium && (
               <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-4 py-1 transform rotate-45 translate-x-4 -translate-y-4">
                 Active
@@ -93,14 +207,36 @@ export const SubscriptionScreen: React.FC = () => {
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                <svg
+                  className="w-5 h-5 text-green-500 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
                 </svg>
                 <span>Higher case limits</span>
               </li>
               <li className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                <svg
+                  className="w-5 h-5 text-green-500 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
                 </svg>
                 <span>Full feature access</span>
               </li>
@@ -110,7 +246,7 @@ export const SubscriptionScreen: React.FC = () => {
                 onClick={handleSubscribe}
                 disabled={isLoading}
                 className={`w-full ${
-                  isLoading ? 'bg-plexus-blue/70' : 'bg-plexus-blue hover:bg-plexus-blue-dark'
+                  isLoading ? 'bg-plexus-blue/70 cursor-wait' : 'bg-plexus-blue hover:bg-plexus-blue-dark'
                 } text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-plexus-ease transform hover:scale-105`}
               >
                 {isLoading ? 'Processing...' : 'Upgrade to Plus'}

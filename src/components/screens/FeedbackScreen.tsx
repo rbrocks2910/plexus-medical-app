@@ -269,11 +269,8 @@ export const FeedbackScreen: React.FC = () => {
         </div>
 
         {/* The final call-to-action to complete the learning loop. */}
-        <div className="text-center mt-8 space-y-4">
+        <div className="text-center mt-8">
             <button onClick={() => navigate('/')} className="px-8 py-3 bg-plexus-blue text-white font-bold rounded-lg hover:bg-plexus-blue-dark transition-colors ease-plexus-ease transform hover:scale-105">Start New Case</button>
-            <div className="mt-4">
-                <button onClick={() => navigate('/past-cases')} className="text-plexus-blue hover:text-plexus-blue-dark font-medium underline">View Past Diagnoses</button>
-            </div>
         </div>
       </div>
       

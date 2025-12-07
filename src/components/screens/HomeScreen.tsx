@@ -222,19 +222,6 @@ export const HomeScreen: React.FC = () => {
                 : "Begin Simulation"
               }
             </button>
-
-            {/* Past Cases link with a more prominent style */}
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => navigate('/past-cases')}
-                className="text-white/80 hover:text-white underline text-sm flex items-center justify-center gap-1 mx-auto"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                View Past Diagnoses
-              </button>
-            </div>
             {state.error && <p className="text-red-300 text-sm mt-2 text-center">{state.error}</p>}
         </div>
 

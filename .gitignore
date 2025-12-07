@@ -1,0 +1,118 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows system files
+desktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+*.stackdump
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Vercel
+.vercel
+
+# Firebase
+.firebase/
+
+# Temporary files
+*.tmp
+*.temp
+
+# User-specific files
+.cache/
+.cursor/
+.claude/
+.gemini/
+.qwen/
+.void-editor/
+.xdm-app-data/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# All system directories (Windows, macOS, Linux)
+AppData/
+Application Data/
+Cookies/
+Contacts/
+Desktop/
+Documents/
+Downloads/
+Favorites/
+Links/
+My Documents/
+NetHood/
+PrintHood/
+Recent/
+SendTo/
+Start Menu/
+Templates/
+UserData/
+Local Settings/
+Application Data/
+Microsoft/
+ProgramData/
+
+# VS Code extensions and user data
+.vscode/extensions/
+.vscode/settings.json
+.cursor/
+
+# Android development
+.android/
+.expo/
+.expo-shared/
+
+# Configuration files
+.config/
+.matplotlib/
+.streamlit/
+
+# Git
+.git/
+.gitignore
+
+# All hidden files and directories except specific ones
+.*
+!.gitignore
+!.env.example

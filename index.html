@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plexus: Medical Training Simulator</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts Import -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'plexus-blue': {
+                DEFAULT: '#1A3C5A', // Primary
+                dark: '#122B40'
+              },
+              'plexus-accent': '#4A90E2', // Secondary
+              'plexus-red': '#FF4D4F', // Error/Warning
+              'ivory': '#F8F1E9',
+              'cool-gray': '#D3E3FC',
+              'soft-green': '#E6F7E6',
+              'plexus-bg-secondary': '#F4F4F4',
+              'plexus-user-chat': '#E6F0FA',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            keyframes: {
+              fadeIn: {
+                from: { opacity: 0 },
+                to: { opacity: 1 },
+              },
+              textFadeIn: {
+                from: { opacity: 0, transform: 'translateY(10px)' },
+                to: { opacity: 1, transform: 'translateY(0)' },
+              },
+              gradient: {
+                '0%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+                '100%': { backgroundPosition: '0% 50%' },
+              },
+              wave: {
+                '0%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-50%)' },
+              },
+              pulseHeart: {
+                '0%, 100%': { transform: 'scale(1)', opacity: 0.8 },
+                '50%': { transform: 'scale(1.03)', opacity: 1 },
+              },
+              typingPulse: {
+                '0%, 100%': { opacity: 0.5 },
+                '50%': { opacity: 1 },
+              },
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
+              'text-fade': 'textFadeIn 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
+              'gradient': 'gradient 15s ease infinite',
+              'wave': 'wave 4s linear infinite',
+              'pulse-heart': 'pulseHeart 2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite',
+              'typing-pulse': 'typingPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            boxShadow: {
+              'plexus': '0 4px 12px rgba(0, 0, 0, 0.08)',
+              'plexus-lg': '0 8px 24px rgba(0, 0, 0, 0.1)',
+            },
+            transitionTimingFunction: {
+              'plexus-ease': 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.2",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.5"
+  }
+}
+</script>
+</head>
+  <body class="bg-plexus-bg-secondary text-gray-900">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

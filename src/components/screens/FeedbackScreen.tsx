@@ -16,8 +16,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { getCaseFeedback } from '../../services/api';
-import { CaseFeedback, MedicalCase, ChatMessage } from '../../types';
+import { saveCompletedCaseWithDetails } from '../../services/firestoreService';
+import { CaseFeedback, MedicalCase, ChatMessage, InvestigationResult } from '../../types';
 import { Card } from '../ui/Card';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import { FEEDBACK_ANALYSIS_MESSAGES } from '../../constants/loadingMessages';
@@ -75,16 +77,18 @@ export const FeedbackScreen: React.FC = () => {
   const { state: routeState } = useLocation(); // Access data passed from the navigate() function.
   const navigate = useNavigate();
   const { getCaseById } = useAppContext();
+  const { user } = useAuth();
 
   // State for the AI-generated feedback and the original medical case.
   const [feedback, setFeedback] = useState<CaseFeedback | null>(null);
   const [medicalCase, setMedicalCase] = useState<MedicalCase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   // State for the "Missed Clues" feature modal.
   const [selectedClue, setSelectedClue] = useState<string | null>(null);
-  
+
   // Destructure performance data passed from CaseScreen. This is crucial for generating feedback.
-  const { userDiagnosis, confidence, chatHistory, differentialDiagnoses } = routeState || {};
+  const { userDiagnosis, confidence, chatHistory, differentialDiagnoses, investigations = [] } = routeState || {};
 
   // Effect hook to fetch feedback when the component mounts.
   useEffect(() => {
@@ -103,10 +107,31 @@ export const FeedbackScreen: React.FC = () => {
       // Call the API service with all the context to get the feedback.
       const feedbackData = await getCaseFeedback(foundCase, userDiagnosis, confidence, chatHistory, differentialDiagnoses);
       setFeedback(feedbackData);
+
+      // Save completed case to Firestore if user is authenticated
+      if (user) {
+        try {
+          await saveCompletedCaseWithDetails(
+            user.uid,
+            caseId,
+            foundCase,
+            userDiagnosis,
+            confidence,
+            feedbackData,
+            chatHistory,
+            investigations,
+            differentialDiagnoses
+          );
+        } catch (error) {
+          console.error('Error saving completed case to Firestore:', error);
+          // We don't want to block the user experience, so we'll continue even if saving fails
+        }
+      }
+
       setIsLoading(false);
     };
     fetchFeedback();
-  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate]);
+  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate, user]);
   
   // Helper function to get dynamic Tailwind CSS classes based on diagnostic correctness.
   const getCorrectnessColor = (correctness: CaseFeedback['correctness']) => {

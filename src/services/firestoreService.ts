@@ -1,19 +1,23 @@
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
   getDocs,
-  serverTimestamp 
+  serverTimestamp,
+  orderBy,
+  limit,
+  addDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { User, Subscription } from '../types';
+import { User, Subscription, MedicalCase, CaseFeedback, ChatMessage, InvestigationResult } from '../types';
 
 /**
- * Firestore service functions for managing user subscriptions
+ * Firestore service functions for managing user subscriptions and completed cases
  */
 
 /**
@@ -23,7 +27,7 @@ export const getUserSubscription = async (userId: string): Promise<Subscription 
   try {
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
-    
+
     if (userDoc.exists()) {
       const userData = userDoc.data();
       return userData.subscription || null;
@@ -87,7 +91,7 @@ export const createUserProfile = async (user: User): Promise<void> => {
   try {
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    
+
     if (!userDoc.exists()) {
       // Create new user profile with default subscription
       await setDoc(userDocRef, {
@@ -110,6 +114,165 @@ export const createUserProfile = async (user: User): Promise<void> => {
     }
   } catch (error) {
     console.error('Error creating/updating user profile:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save completed case to Firestore
+ */
+export interface CompletedCase {
+  id: string;
+  userId: string;
+  caseId: string;
+  medicalCase: Omit<MedicalCase, 'id'>; // Exclude id since we're using Firestore's document ID
+  userDiagnosis: string;
+  confidence: number;
+  correctness: CaseFeedback['correctness'];
+  reasoningAnalysis: string;
+  finalDiagnosisExplanation: string;
+  chatHistory: ChatMessage[];
+  investigations: InvestigationResult[];
+  differentialDiagnoses: string[];
+  createdAt: Timestamp;
+}
+
+export const saveCompletedCase = async (
+  userId: string,
+  caseId: string,
+  medicalCase: MedicalCase,
+  userDiagnosis: string,
+  confidence: number,
+  feedback: CaseFeedback
+): Promise<string> => {
+  try {
+    const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
+      caseId,
+      medicalCase: { ...medicalCase, id: undefined }, // Remove the original id to avoid conflicts
+      userDiagnosis,
+      confidence,
+      correctness: feedback.correctness,
+      reasoningAnalysis: feedback.reasoningAnalysis,
+      finalDiagnosisExplanation: feedback.finalDiagnosisExplanation,
+      chatHistory: [], // Will be populated later when we have chat history
+      investigations: [], // Will be populated later when we have investigations
+      differentialDiagnoses: [], // Will be populated later when we have differential diagnoses
+      createdAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, 'users', userId, 'completedCases'), completedCase);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving completed case:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save completed case with full details
+ */
+export const saveCompletedCaseWithDetails = async (
+  userId: string,
+  caseId: string,
+  medicalCase: MedicalCase,
+  userDiagnosis: string,
+  confidence: number,
+  feedback: CaseFeedback,
+  chatHistory: ChatMessage[],
+  investigations: InvestigationResult[],
+  differentialDiagnoses: string[]
+): Promise<string> => {
+  try {
+    const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
+      caseId,
+      medicalCase: { ...medicalCase, id: undefined }, // Remove the original id to avoid conflicts
+      userDiagnosis,
+      confidence,
+      correctness: feedback.correctness,
+      reasoningAnalysis: feedback.reasoningAnalysis,
+      finalDiagnosisExplanation: feedback.finalDiagnosisExplanation,
+      chatHistory: chatHistory || [],
+      investigations: investigations || [],
+      differentialDiagnoses: differentialDiagnoses || [],
+      createdAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, 'users', userId, 'completedCases'), completedCase);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving completed case with details:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all completed cases for a user
+ */
+export const getCompletedCases = async (userId: string): Promise<CompletedCase[]> => {
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'completedCases'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const cases: CompletedCase[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      cases.push({
+        id: doc.id,
+        userId,
+        caseId: data.caseId,
+        medicalCase: data.medicalCase,
+        userDiagnosis: data.userDiagnosis,
+        confidence: data.confidence,
+        correctness: data.correctness,
+        reasoningAnalysis: data.reasoningAnalysis,
+        finalDiagnosisExplanation: data.finalDiagnosisExplanation,
+        chatHistory: data.chatHistory || [],
+        investigations: data.investigations || [],
+        differentialDiagnoses: data.differentialDiagnoses || [],
+        createdAt: data.createdAt
+      });
+    });
+
+    return cases;
+  } catch (error) {
+    console.error('Error getting completed cases:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a specific completed case by ID
+ */
+export const getCompletedCaseById = async (userId: string, caseId: string): Promise<CompletedCase | undefined> => {
+  try {
+    const docRef = doc(db, 'users', userId, 'completedCases', caseId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        userId,
+        caseId: data.caseId,
+        medicalCase: data.medicalCase,
+        userDiagnosis: data.userDiagnosis,
+        confidence: data.confidence,
+        correctness: data.correctness,
+        reasoningAnalysis: data.reasoningAnalysis,
+        finalDiagnosisExplanation: data.finalDiagnosisExplanation,
+        chatHistory: data.chatHistory || [],
+        investigations: data.investigations || [],
+        differentialDiagnoses: data.differentialDiagnoses || [],
+        createdAt: data.createdAt
+      };
+    }
+    return undefined;
+  } catch (error) {
+    console.error('Error getting completed case by ID:', error);
     throw error;
   }
 };

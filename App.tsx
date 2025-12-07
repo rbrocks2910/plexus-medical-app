@@ -31,6 +31,8 @@ import { HomeScreen } from './src/components/screens/HomeScreen';
 import { CaseScreen } from './src/components/screens/CaseScreen';
 import { FeedbackScreen } from './src/components/screens/FeedbackScreen';
 import { SubscriptionScreen } from './src/components/screens/SubscriptionScreen';
+import { PastCasesScreen } from './src/components/screens/PastCasesScreen';
+import { CompletedCaseDetailScreen } from './src/components/screens/CompletedCaseDetailScreen';
 import { ProtectedRoute } from './src/components/ui/ProtectedRoute';
 
 const App: React.FC = () => {
@@ -72,6 +74,20 @@ const App: React.FC = () => {
             <Route path="/subscription" element={
               <ProtectedRoute>
                 <SubscriptionScreen />
+              </ProtectedRoute>
+            } />
+
+            {/* Past Cases route */}
+            <Route path="/past-cases" element={
+              <ProtectedRoute>
+                <PastCasesScreen />
+              </ProtectedRoute>
+            } />
+
+            {/* Completed Case Detail route */}
+            <Route path="/past-cases/:caseId" element={
+              <ProtectedRoute>
+                <CompletedCaseDetailScreen />
               </ProtectedRoute>
             } />
 

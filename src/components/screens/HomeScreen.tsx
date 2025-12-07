@@ -153,7 +153,18 @@ export const HomeScreen: React.FC = () => {
               )}
             </div>
 
-            {/* Subscription Button */}
+            {/* Past Cases Button - subtle and clean */}
+            <button
+              onClick={() => navigate('/past-cases')}
+              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Past Cases
+            </button>
+
+            {/* Subscription Button - subtle and clean */}
             <button
               onClick={() => navigate('/subscription')}
               className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"

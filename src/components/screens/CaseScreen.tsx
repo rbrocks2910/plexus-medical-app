@@ -178,7 +178,15 @@ export const CaseScreen: React.FC = () => {
     if (!finalDiagnosis.trim() || !caseId) return;
     setIsSubmitting(true);
     completeCase(caseId);
-    navigate(`/feedback/${caseId}`, { state: { userDiagnosis: finalDiagnosis, confidence, chatHistory, differentialDiagnoses } });
+    navigate(`/feedback/${caseId}`, {
+      state: {
+        userDiagnosis: finalDiagnosis,
+        confidence,
+        chatHistory,
+        differentialDiagnoses,
+        investigations
+      }
+    });
   };
 
   if (!medicalCase) {

@@ -3,8 +3,9 @@
  * @description This file handles loading the disease databases using fs.readFileSync
  * for compatibility with Vercel serverless functions.
  */
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 /**
  * Loads and caches all disease database JSON files.
@@ -13,8 +14,19 @@ import { join } from 'path';
  */
 export const loadAllDiseaseDBs = (): Record<string, { name: string; rarity: string }[]> => {
   try {
-    // In Vercel serverless functions, files are available relative to the function
-    const filePath = join(process.cwd(), 'api/_db/diseases.json');
+    // Get the directory of the current file for more reliable path resolution in serverless environments
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+
+    // Construct path relative to this file
+    const filePath = join(__dirname, '../_db/diseases.json');
+
+    // Verify file exists before attempting to read
+    if (!existsSync(filePath)) {
+      console.error(`Disease database file not found at path: ${filePath}`);
+      return {};
+    }
+
     const fileContent = readFileSync(filePath, 'utf-8');
     return JSON.parse(fileContent);
   } catch (error) {

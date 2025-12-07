@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { getCompletedCases } from '../../services/firestoreService';
 import { CompletedCase } from '../../services/firestoreService';
 import { Card } from '../ui/Card';
@@ -57,7 +57,7 @@ const confidenceColor = (confidence: number) => {
 };
 
 export const PastCasesScreen: React.FC = () => {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [cases, setCases] = useState<CompletedCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { getCompletedCaseById } from '../../services/firestoreService';
 import { CompletedCase } from '../../services/firestoreService';
 import { Card } from '../ui/Card';
@@ -58,7 +58,7 @@ const AccordionItem: React.FC<{ title: string; children: React.ReactNode; icon: 
 export const CompletedCaseDetailScreen: React.FC = () => {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [completedCase, setCompletedCase] = useState<CompletedCase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

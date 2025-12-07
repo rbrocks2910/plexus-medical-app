@@ -16,7 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { getCaseFeedback } from '../../services/api';
 import { saveCompletedCaseWithDetails } from '../../services/firestoreService';
 import { CaseFeedback, MedicalCase, ChatMessage, InvestigationResult } from '../../types';
@@ -77,7 +77,7 @@ export const FeedbackScreen: React.FC = () => {
   const { state: routeState } = useLocation(); // Access data passed from the navigate() function.
   const navigate = useNavigate();
   const { getCaseById } = useAppContext();
-  const { user } = useAuthContext();
+  const { user } = useAuth();
 
   // State for the AI-generated feedback and the original medical case.
   const [feedback, setFeedback] = useState<CaseFeedback | null>(null);

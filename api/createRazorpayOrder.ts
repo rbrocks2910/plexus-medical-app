@@ -25,10 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing amount or userId' });
     }
 
+    // Generate a shorter unique receipt ID within the 40-character limit
+    const timestamp = Date.now().toString().slice(-6); // Take last 6 digits of timestamp
+    const userIdShort = userId.length > 20 ? userId.substring(0, 20) : userId; // Truncate userId if too long
+    const receiptId = `receipt_${userIdShort}_${timestamp}`.substring(0, 40); // Ensure total length <= 40
+
     const options = {
       amount, // in paise (₹300 => 30000)
       currency: currency || 'INR',
-      receipt: `receipt_${userId}_${Date.now()}`,
+      receipt: receiptId,
       notes: {
         plan,
         userId,

@@ -5,17 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Specialty, RaritySelection } from '../../types';
+import { Specialty, RaritySelection, SubscriptionTier } from '../../types';
 import { SPECIALTIES, RARITY_LEVELS } from '../../constants';
 import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { Card } from '../ui/Card';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import { CASE_GENERATION_TIPS } from '../../constants/loadingMessages';
-
-// 1. ADD THIS IMPORT <---
-import { useAuth } from '../../context/AuthContext';
-import { useAppContext } from '../../context/AppContext';
-import { SubscriptionTier } from '../../types';
 
 const HeartbeatWave: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round">

@@ -108,8 +108,8 @@ export type SubscriptionTier = 'free' | 'premium';
 // Subscription information
 export interface Subscription {
   tier: SubscriptionTier;
-  startDate: Date;
-  endDate: Date | null; // null for free tier
+  startDate: Date | string; // Firestore timestamps can be converted to Date
+  endDate: Date | string | null; // null for free tier
   isActive: boolean;
   totalCasesUsed: number;
   maxTotalCases: number;
@@ -119,7 +119,7 @@ export interface Subscription {
 export interface UserUsageStats {
   casesGeneratedToday: number;
   casesGeneratedThisWeek: number;
-  lastCaseGeneratedAt: Date;
+  lastCaseGeneratedAt: Date | string;
   totalCasesGenerated: number;
   apiRequestsToday: number;
   apiRequestsThisHour: number;

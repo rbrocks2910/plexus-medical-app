@@ -12,8 +12,16 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider
 } from 'firebase/auth';
-import { auth, googleProvider } from '../services/firebase';
-import { User, AuthContextType, UserUsageStats } from '../types';
+import { auth, googleProvider, db } from '../services/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { User, AuthContextType, UserUsageStats, Subscription } from '../types';
+import {
+  createUserProfile,
+  getUserSubscription,
+  updateUserStats as updateFirestoreUserStats,
+  updateUserSubscription as updateFirestoreUserSubscription
+} from '../services/firestoreService';
+import { convertFirestoreUser } from '../utils/firestoreHelpers';
 
 // Default limits for rate limiting
 const DEFAULT_RATE_LIMITS = {
@@ -35,7 +43,7 @@ const SUBSCRIPTION_LIMITS = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Convert Firebase user to our User type
+// Convert Firebase user to our User type with default free subscription
 const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
   const now = new Date();
 
@@ -74,74 +82,90 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Load user data from localStorage on mount
-  useEffect(() => {
-    const loadUserData = () => {
-      try {
-        const savedUser = localStorage.getItem('plexus_user');
-        const savedUsageStats = localStorage.getItem('plexus_usage_stats');
-
-        if (savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          // Convert date strings back to Date objects
-          parsedUser.createdAt = new Date(parsedUser.createdAt);
-          parsedUser.lastLoginAt = new Date(parsedUser.lastLoginAt);
-          parsedUser.usageStats.lastCaseGeneratedAt = new Date(parsedUser.usageStats.lastCaseGeneratedAt);
-
-          if (savedUsageStats) {
-            parsedUser.usageStats = { ...parsedUser.usageStats, ...JSON.parse(savedUsageStats) };
-          }
-
-          setUser(parsedUser);
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-        // Clear corrupted data
-        localStorage.removeItem('plexus_user');
-        localStorage.removeItem('plexus_usage_stats');
-      }
-    };
-
-    loadUserData();
-  }, []);
+  const [unsubscribeFirestore, setUnsubscribeFirestore] = useState<() => void | null>(null);
 
   // Firebase auth state listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userData = convertFirebaseUser(firebaseUser);
-        setUser(userData);
-        setError(null);
+        try {
+          // Create user profile in Firestore if it doesn't exist
+          const userData = convertFirebaseUser(firebaseUser);
+          await createUserProfile(userData);
 
-        // Save to localStorage
-        localStorage.setItem('plexus_user', JSON.stringify(userData));
+          // Set up real-time listener for user data from Firestore
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+              const firestoreUserData = docSnapshot.data();
+              const updatedUser = convertFirestoreUser(firestoreUserData, firebaseUser);
+              setUser(updatedUser);
+            }
+          });
+
+          setUnsubscribeFirestore(() => unsubscribe);
+          setIsLoading(false);
+        } catch (err) {
+          console.error('Error setting up user:', err);
+          setError(err instanceof Error ? err.message : 'Failed to set up user');
+          setIsLoading(false);
+        }
       } else {
+        // User signed out
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          setUnsubscribeFirestore(null);
+        }
         setUser(null);
-        // Clear localStorage
-        localStorage.removeItem('plexus_user');
-        localStorage.removeItem('plexus_usage_stats');
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+    };
   }, []);
+
+  // Update user usage statistics
+  const updateUserStats = async (stats: Partial<UserUsageStats>) => {
+    if (!user) return;
+
+    try {
+      // Update in Firestore
+      await updateFirestoreUserStats(user.uid, stats);
+
+      // The real-time listener will update the local state automatically
+    } catch (err) {
+      console.error('Error updating user stats:', err);
+      throw err;
+    }
+  };
+
+  // Update subscription information
+  const updateSubscription = async (subscriptionUpdate: Partial<Subscription>) => {
+    if (!user) return;
+
+    try {
+      // Update in Firestore
+      await updateFirestoreUserSubscription(user.uid, subscriptionUpdate);
+
+      // The real-time listener will update the local state automatically
+    } catch (err) {
+      console.error('Error updating subscription:', err);
+      throw err;
+    }
+  };
 
   // Sign in with Google
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await signInWithPopup(auth, googleProvider);
-      // Immediately set user state from the sign-in result
-      const userData = convertFirebaseUser(result.user);
-      setUser(userData);
-      setError(null);
-      // Save to localStorage
-      localStorage.setItem('plexus_user', JSON.stringify(userData));
-      // Reset loading state immediately after successful sign-in
-      setIsLoading(false);
+      await signInWithPopup(auth, googleProvider);
+      // The auth state listener will handle setting the user
     } catch (error) {
       console.error('Error signing in with Google:', error);
       setError(error instanceof Error ? error.message : 'Failed to sign in with Google');
@@ -162,75 +186,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Update user usage statistics
-  const updateUserStats = async (stats: Partial<UserUsageStats>) => {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      usageStats: { ...user.usageStats, ...stats }
-    };
-
-    setUser(updatedUser);
-
-    // Save to localStorage
-    localStorage.setItem('plexus_user', JSON.stringify(updatedUser));
-    localStorage.setItem('plexus_usage_stats', JSON.stringify(updatedUser.usageStats));
-  };
-
-  // Update subscription information
-  const updateSubscription = async (subscriptionUpdate: Partial<Subscription>) => {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      usageStats: {
-        ...user.usageStats,
-        subscription: {
-          ...user.usageStats.subscription!,
-          ...subscriptionUpdate
-        }
-      }
-    };
-
-    setUser(updatedUser);
-
-    // Save to localStorage
-    localStorage.setItem('plexus_user', JSON.stringify(updatedUser));
-    localStorage.setItem('plexus_usage_stats', JSON.stringify(updatedUser.usageStats));
-  };
-
   // Subscribe to premium tier
   const subscribeToPremium = async () => {
     if (!user) return;
 
-    const now = new Date();
-    // In a real app, you would process payment before updating the subscription
-    // For now, we'll just update the subscription to premium
-    const premiumSubscription = {
-      tier: 'premium' as const,
-      startDate: now,
-      // For demo purposes, set end date to 30 days from now
-      // In a real app, this would be handled by your payment system
-      endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-      isActive: true,
-      totalCasesUsed: user.usageStats.subscription?.totalCasesUsed || 0, // Keep any previously used cases
-      maxTotalCases: SUBSCRIPTION_LIMITS.premium.daily, // Premium users get daily cases
-    };
+    try {
+      const now = new Date();
+      // In a real app, you would process payment before updating the subscription
+      // For now, we'll just update the subscription to premium
+      const premiumSubscription = {
+        tier: 'premium' as const,
+        startDate: now.toISOString(), // Firestore compatible date format
+        // For demo purposes, set end date to 30 days from now
+        // In a real app, this would be handled by your payment system
+        endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        isActive: true,
+        totalCasesUsed: user.usageStats.subscription?.totalCasesUsed || 0, // Keep any previously used cases
+        maxTotalCases: SUBSCRIPTION_LIMITS.premium.daily, // Premium users get daily cases
+      };
 
-    const updatedUser = {
-      ...user,
-      usageStats: {
-        ...user.usageStats,
-        subscription: premiumSubscription
-      }
-    };
-
-    setUser(updatedUser);
-
-    // Save to localStorage
-    localStorage.setItem('plexus_user', JSON.stringify(updatedUser));
-    localStorage.setItem('plexus_usage_stats', JSON.stringify(updatedUser.usageStats));
+      // Update in Firestore
+      await updateFirestoreUserSubscription(user.uid, premiumSubscription);
+    } catch (err) {
+      console.error('Error subscribing to premium:', err);
+      throw err;
+    }
   };
 
   // Check rate limits
@@ -285,7 +265,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // For free users, check total cases used
     if (subscription.tier === 'free') {
-      const remaining = subscription.maxTotalCases - subscription.totalCasesUsed;
+      const remaining = subscription.maxTotalCases - (subscription.totalCasesUsed || 0);
       const allowed = remaining > 0;
 
       // Reset time is not applicable for total limit, so we return current time
@@ -294,15 +274,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // For premium users, check daily limit
     else {
       const currentDay = now.toDateString();
-      const lastGeneratedDay = user.usageStats.lastCaseGeneratedAt.toDateString();
+      const lastGeneratedDay = new Date(user.usageStats.lastCaseGeneratedAt).toDateString();
 
       // If it's a new day, reset the casesUsedToday counter (for premium users)
       if (lastGeneratedDay !== currentDay) {
-        // For premium users, we use casesGeneratedToday in the usageStats as daily counter
-        await updateUserStats({ casesGeneratedToday: 0, lastCaseGeneratedAt: new Date(0) });
+        await updateUserStats({ casesGeneratedToday: 0 });
       }
 
-      const remaining = subscription.maxTotalCases - user.usageStats.casesGeneratedToday;
+      const remaining = (subscription.maxTotalCases || SUBSCRIPTION_LIMITS.premium.daily) - user.usageStats.casesGeneratedToday;
       const allowed = remaining > 0;
 
       // Set reset time to next midnight for daily premium limit

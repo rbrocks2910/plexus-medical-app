@@ -89,9 +89,6 @@ export const HomeScreen: React.FC = () => {
           lastCaseGeneratedAt: new Date(),
           totalCasesGenerated: (user?.usageStats?.totalCasesGenerated || 0) + 1,
         });
-
-        // Check if the user has exceeded their case limit and update subscription accordingly
-        await checkAndUpdateSubscription();
       }
       navigate(`/case/${newCase.id}`);
     }

@@ -77,7 +77,7 @@ export const FeedbackScreen: React.FC = () => {
   const { state: routeState } = useLocation(); // Access data passed from the navigate() function.
   const navigate = useNavigate();
   const { getCaseById } = useAppContext();
-  const { user } = useAuth();
+  const { user, checkAndUpdateSubscription } = useAuth();
 
   // State for the AI-generated feedback and the original medical case.
   const [feedback, setFeedback] = useState<CaseFeedback | null>(null);
@@ -122,6 +122,9 @@ export const FeedbackScreen: React.FC = () => {
             investigations,
             differentialDiagnoses
           );
+
+          // After saving the completed case, check if the user has exceeded their case limit
+          await checkAndUpdateSubscription();
         } catch (error) {
           console.error('Error saving completed case to Firestore:', error);
           // We don't want to block the user experience, so we'll continue even if saving fails
@@ -131,8 +134,8 @@ export const FeedbackScreen: React.FC = () => {
       setIsLoading(false);
     };
     fetchFeedback();
-  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate, user]);
-  
+  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate, user, checkAndUpdateSubscription]);
+
   // Helper function to get dynamic Tailwind CSS classes based on diagnostic correctness.
   const getCorrectnessColor = (correctness: CaseFeedback['correctness']) => {
     switch (correctness) {
@@ -142,7 +145,7 @@ export const FeedbackScreen: React.FC = () => {
         default: return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   // Helper function to get dynamic Tailwind CSS classes based on case rarity.
   const getRarityColor = (rarity: MedicalCase['rarity']) => {
     switch (rarity) {
@@ -158,7 +161,7 @@ export const FeedbackScreen: React.FC = () => {
   if (isLoading || !medicalCase) {
     return <LoadingOverlay title="Analyzing Performance" messages={FEEDBACK_ANALYSIS_MESSAGES} />;
   }
-  
+
   if (!feedback) {
      return (
       <div className="min-h-screen bg-plexus-bg-secondary flex flex-col items-center justify-center p-4">
@@ -167,7 +170,7 @@ export const FeedbackScreen: React.FC = () => {
       </div>
     );
   }
-  
+
   // Calculate accuracy percentage for the ProgressRing based on the 'correctness' field from the feedback object.
   const accuracyPercentage = feedback.correctness === 'Correct' ? 100 : feedback.correctness === 'Partially Correct' ? 50 : 0;
 
@@ -210,7 +213,7 @@ export const FeedbackScreen: React.FC = () => {
                     </div>
                 </div>
             </AccordionItem>
-            
+
             {/* Accordion for Performance Analysis (What Went Well / Improvement Areas) */}
             <AccordionItem title="Performance Analysis" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>}>
                  <div className="space-y-6">
@@ -273,7 +276,7 @@ export const FeedbackScreen: React.FC = () => {
             <button onClick={() => navigate('/')} className="px-8 py-3 bg-plexus-blue text-white font-bold rounded-lg hover:bg-plexus-blue-dark transition-colors ease-plexus-ease transform hover:scale-105">Start New Case</button>
         </div>
       </div>
-      
+
       {/* Modal for the "Key Missed Clues" feature. It's shown when `selectedClue` is not null. */}
       {selectedClue && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedClue(null)}>

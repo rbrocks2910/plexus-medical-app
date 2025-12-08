@@ -146,9 +146,11 @@ export const saveCompletedCase = async (
   feedback: CaseFeedback
 ): Promise<string> => {
   try {
+    // Remove the id from medicalCase to avoid conflicts with Firestore's document ID
+    const { id, ...medicalCaseWithoutId } = medicalCase;
     const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
       caseId,
-      medicalCase: { ...medicalCase, id: undefined }, // Remove the original id to avoid conflicts
+      medicalCase: medicalCaseWithoutId,
       userDiagnosis,
       confidence,
       correctness: feedback.correctness,
@@ -183,9 +185,11 @@ export const saveCompletedCaseWithDetails = async (
   differentialDiagnoses: string[]
 ): Promise<string> => {
   try {
+    // Remove the id from medicalCase to avoid conflicts with Firestore's document ID
+    const { id, ...medicalCaseWithoutId } = medicalCase;
     const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
       caseId,
-      medicalCase: { ...medicalCase, id: undefined }, // Remove the original id to avoid conflicts
+      medicalCase: medicalCaseWithoutId,
       userDiagnosis,
       confidence,
       correctness: feedback.correctness,

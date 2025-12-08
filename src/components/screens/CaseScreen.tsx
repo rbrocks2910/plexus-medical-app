@@ -96,9 +96,19 @@ export const CaseScreen: React.FC = () => {
     }
   }, [medicalCase, chatHistory.length]);
 
-  // Effect to scroll the chat view automatically when new messages are added.
+  // Effect to scroll the chat view automatically when new messages are added, but only if user is near the bottom
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const chatContainer = chatEndRef.current?.parentElement;
+    if (chatContainer) {
+      // Only scroll to bottom if user is already near the bottom (within 100px)
+      const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 100;
+      if (isNearBottom) {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Fallback for when parent element isn't available
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatHistory]);
 
   // === FEATURE: PATIENT CONSULTATION (CHAT) ===
@@ -259,7 +269,7 @@ export const CaseScreen: React.FC = () => {
           </Card>
 
           {/* Card containing the main chat interface. */}
-          <Card className="flex flex-col h-[65vh]">
+          <Card className="flex flex-col h-[50vh] sm:h-[60vh] md:h-[65vh]">
             <h2 className="text-xl font-semibold mb-4 text-plexus-blue">Consultation</h2>
             {/* Chat history display area. `overflow-y-auto` makes it scrollable. */}
             <div className="flex-grow overflow-y-auto pr-4 space-y-4">

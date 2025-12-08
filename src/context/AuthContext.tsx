@@ -287,6 +287,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { allowed, remaining, resetTime };
   };
 
+  // Check and update subscription status based on case usage
+  const checkAndUpdateSubscription = async () => {
+    if (!user || !user.usageStats.subscription) return;
+
+    const subscription = user.usageStats.subscription;
+    const defaultMax =
+      subscription.tier === 'premium'
+        ? SUBSCRIPTION_LIMITS.premium.total
+        : SUBSCRIPTION_LIMITS.free.total;
+
+    const maxTotalCases = subscription.maxTotalCases ?? defaultMax;
+    const used = subscription.totalCasesUsed || 0;
+
+    // Check if the user has exceeded their case limit
+    if (used >= maxTotalCases && subscription.tier === 'premium') {
+      // Downgrade to free tier
+      const downgradeSubscription: Subscription = {
+        tier: 'free',
+        startDate: subscription.startDate,
+        endDate: null,
+        isActive: true,
+        totalCasesUsed: used, // Keep the same usage count
+        maxTotalCases: SUBSCRIPTION_LIMITS.free.total,
+      };
+
+      await updateFirestoreUserSubscription(user.uid, downgradeSubscription);
+    } else if (used < maxTotalCases && subscription.tier === 'free' && maxTotalCases > SUBSCRIPTION_LIMITS.free.total) {
+      // This scenario shouldn't happen with the current logic, but adding for completeness
+      // If somehow the user has a free tier but more than free limit, update maxTotalCases
+      await updateFirestoreUserSubscription(user.uid, {
+        maxTotalCases: SUBSCRIPTION_LIMITS.free.total,
+      });
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -298,6 +333,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     subscribeToPremium,
     updateSubscription,
     canGenerateCase,
+    checkAndUpdateSubscription,
   };
 
   return (

@@ -32,6 +32,7 @@ export const HomeScreen: React.FC = () => {
   const [specialty, setSpecialty] = useState<Specialty>(Specialty['General Medicine']);
   const [rarity, setRarity] = useState<RaritySelection>('Any');
   const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false);
+  const [caseLimitMessage, setCaseLimitMessage] = useState<string | null>(null);
   const { startNewCase, state } = useAppContext();
   const navigate = useNavigate();
   const [quoteIndex, setQuoteIndex] = useState(0);
@@ -70,11 +71,19 @@ export const HomeScreen: React.FC = () => {
 
   const handleStartCase = async () => {
     // Check if user can generate a case using backend/business rules
-    const canGenerate = await canGenerateCase();
-    if (!canGenerate.allowed) {
-      // You could show a toast/snackbar here if you want feedback
+    const canGenerateResult = await canGenerateCase();
+    if (!canGenerateResult.allowed) {
+      // Show feedback to the user about why they can't generate a case
+      if (canGenerateResult.remaining === 0) {
+        setCaseLimitMessage(`You have reached your case limit. Your ${subscription?.tier || 'free'} plan includes ${subscription?.maxTotalCases || 2} total cases. Please upgrade to continue.`);
+      } else {
+        setCaseLimitMessage('You are not allowed to generate another case at this time.');
+      }
       return;
     }
+
+    // Clear any previous limit messages
+    setCaseLimitMessage(null);
 
     const newCase = await startNewCase(specialty, rarity);
     if (newCase) {
@@ -269,6 +278,18 @@ export const HomeScreen: React.FC = () => {
           >
             {startButtonLabel}
           </button>
+
+          {caseLimitMessage && (
+            <div className="mt-2 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg text-sm text-center">
+              {caseLimitMessage}
+              <button
+                onClick={() => setCaseLimitMessage(null)}
+                className="ml-2 text-yellow-800 font-bold"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {state.error && (
             <p className="text-red-300 text-sm mt-2 text-center">{state.error}</p>

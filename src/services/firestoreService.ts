@@ -134,7 +134,7 @@ export interface CompletedCase {
   chatHistory: ChatMessage[];
   investigations: InvestigationResult[];
   differentialDiagnoses: string[];
-  createdAt: Timestamp;
+  createdAt: Timestamp | ReturnType<typeof serverTimestamp>;
 }
 
 export const saveCompletedCase = async (

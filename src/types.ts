@@ -151,4 +151,5 @@ export interface AuthContextType {
   subscribeToPremium: () => Promise<void>;
   updateSubscription: (subscription: Partial<Subscription>) => Promise<void>;
   canGenerateCase: () => Promise<{ allowed: boolean; remaining: number; resetTime: Date }>;
+  checkAndUpdateSubscription: () => Promise<void>;
 }

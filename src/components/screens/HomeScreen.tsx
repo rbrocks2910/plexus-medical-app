@@ -37,7 +37,7 @@ export const HomeScreen: React.FC = () => {
   const [quoteIndex, setQuoteIndex] = useState(0);
 
   // AUTH LOGIC
-  const { user, signOut, updateSubscription, updateUserStats, canGenerateCase } = useAuth();
+  const { user, signOut, updateSubscription, updateUserStats, canGenerateCase, checkAndUpdateSubscription } = useAuth();
   const subscription = user?.usageStats?.subscription;
 
   const handleLogout = async () => {
@@ -50,6 +50,11 @@ export const HomeScreen: React.FC = () => {
   };
 
   useEffect(() => {
+    // Check subscription status when component mounts
+    if (user) {
+      checkAndUpdateSubscription();
+    }
+
     setQuoteIndex(Math.floor(Math.random() * CASE_GENERATION_TIPS.length));
     const quoteInterval = setInterval(() => {
       setQuoteIndex(prevIndex => {
@@ -61,7 +66,7 @@ export const HomeScreen: React.FC = () => {
       });
     }, 8000);
     return () => clearInterval(quoteInterval);
-  }, []);
+  }, [user, checkAndUpdateSubscription]);
 
   const handleStartCase = async () => {
     // Check if user can generate a case using backend/business rules
@@ -84,6 +89,9 @@ export const HomeScreen: React.FC = () => {
           lastCaseGeneratedAt: new Date(),
           totalCasesGenerated: (user?.usageStats?.totalCasesGenerated || 0) + 1,
         });
+
+        // Check if the user has exceeded their case limit and update subscription accordingly
+        await checkAndUpdateSubscription();
       }
       navigate(`/case/${newCase.id}`);
     }

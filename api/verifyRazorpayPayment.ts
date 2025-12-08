@@ -2,6 +2,38 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+// Initialize Firebase if not already initialized
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
+
+const db = getFirestore(app);
+
+// Subscription limits for case generation
+const SUBSCRIPTION_LIMITS = {
+  free: {
+    total: 2,    // 2 total cases for free users
+  },
+  premium: {
+    total: 30,   // 30 total cases for the entire monthly plan
+  }
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -23,11 +55,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userId: string;
     };
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Missing Razorpay params' });
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: razorpay_order_id, razorpay_payment_id, razorpay_signature, or userId'
+      });
     }
 
     const secret = process.env.RAZORPAY_KEY_SECRET as string;
+
+    if (!secret) {
+      console.error('RAZORPAY_KEY_SECRET is not set in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
+      });
+    }
+
     const payload = `${razorpay_order_id}|${razorpay_payment_id}`;
 
     const expectedSignature = crypto
@@ -38,16 +82,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const success = expectedSignature === razorpay_signature;
 
     if (!success) {
+      console.error('Razorpay signature verification failed');
+      console.error('Expected signature:', expectedSignature);
+      console.error('Received signature:', razorpay_signature);
       return res.status(400).json({ success: false, message: 'Invalid signature' });
     }
 
-    // ✅ At this point payment is verified.
-    // Here you *could* also:
-    //   - log payment to Firestore
-    //   - mark "paymentCompleted" flag, etc.
-    // We let the frontend call subscribeToPremium() after this.
+    if (success && userId) {
+      // Update user's subscription to premium in Firestore
+      try {
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
 
-    return res.status(200).json({ success: true });
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const now = new Date();
+
+          // Get current usage stats to preserve them
+          const currentTotalCasesUsed = userData.usageStats?.subscription?.totalCasesUsed || 0;
+
+          // Prepare premium subscription data
+          const premiumSubscription = {
+            tier: 'premium',
+            startDate: now.toISOString(),
+            // For demo purposes, set end date to 30 days from now
+            // In a real app, this would be handled by your payment system
+            endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            isActive: true,
+            totalCasesUsed: currentTotalCasesUsed, // Keep any previously used cases
+            maxTotalCases: SUBSCRIPTION_LIMITS.premium.total, // 30 cases total per plan
+          };
+
+          // Update the user's subscription in Firestore
+          await setDoc(userDocRef, {
+            subscription: premiumSubscription,
+          }, { merge: true });
+
+          console.log(`User ${userId} subscription updated to premium`);
+        } else {
+          console.error(`User document does not exist for userId: ${userId}`);
+          // Don't fail the entire request, just log the error
+        }
+      } catch (updateError) {
+        console.error('Error updating user subscription in Firestore:', updateError);
+        // Don't fail the entire request if just the subscription update fails
+      }
+    }
+
+    // ✅ At this point payment is verified and subscription updated.
+    // We let the frontend call subscribeToPremium() after this if needed for UI updates.
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified and subscription updated successfully'
+    });
   } catch (err: any) {
     console.error('Error verifying Razorpay payment:', err);
     return res.status(500).json({ success: false, message: 'Verification failed' });

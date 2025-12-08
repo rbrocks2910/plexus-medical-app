@@ -3,7 +3,7 @@
  * @description Landing page with authentication status and simulation setup.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Specialty, RaritySelection } from '../../types';
 import { SPECIALTIES, RARITY_LEVELS } from '../../constants';
@@ -33,6 +33,8 @@ export const HomeScreen: React.FC = () => {
   const [rarity, setRarity] = useState<RaritySelection>('Any');
   const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false);
   const [caseLimitMessage, setCaseLimitMessage] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const { startNewCase, state } = useAppContext();
   const navigate = useNavigate();
   const [quoteIndex, setQuoteIndex] = useState(0);
@@ -43,6 +45,7 @@ export const HomeScreen: React.FC = () => {
 
   const handleLogout = async () => {
     try {
+      setIsMobileMenuOpen(false); // Close mobile menu on logout
       await signOut();
       // ProtectedRoute will redirect to /login
     } catch (error) {
@@ -68,6 +71,20 @@ export const HomeScreen: React.FC = () => {
     }, 8000);
     return () => clearInterval(quoteInterval);
   }, [user, checkAndUpdateSubscription]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleStartCase = async () => {
     // Check if user can generate a case using backend/business rules
@@ -125,7 +142,7 @@ export const HomeScreen: React.FC = () => {
 
       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-plexus-blue to-plexus-accent bg-[200%_200%] animate-gradient relative overflow-hidden">
         {/* HEADER */}
-        <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+        <header className="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-center z-50">
           {/* Logo */}
           <div className="flex items-center gap-2 text-white/80">
             <div className="w-6 h-6 border border-white/40 rounded flex items-center justify-center text-xs font-bold">
@@ -134,18 +151,18 @@ export const HomeScreen: React.FC = () => {
             <span className="font-semibold tracking-wide text-sm">PLEXUS</span>
           </div>
 
-          {/* User Profile & Logout */}
-          <div className="flex items-center gap-4">
-            {/* User Info */}
-            <div className="hidden md:flex flex-col items-end text-white">
+          {/* User Profile & Logout - Responsive layout */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* User Info - visible on larger screens */}
+            <div className="hidden md:flex flex-col items-end text-white max-w-[120px] sm:max-w-[150px]">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
+                <span className="text-xs sm:text-sm font-medium truncate">
                   {user?.displayName || 'Medical Professional'}
                 </span>
                 {/* Subscription badge */}
                 {subscription && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    className={`px-1.5 py-0.5 rounded-full text-[0.6rem] sm:text-xs font-medium whitespace-nowrap ${
                       subscription.tier === 'premium'
                         ? 'bg-green-500/30 text-green-200 border border-green-500/50'
                         : 'bg-blue-500/30 text-blue-200 border border-blue-500/50'
@@ -155,11 +172,13 @@ export const HomeScreen: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className="text-xs text-white/60">{user?.email}</span>
+              <span className="text-[0.6rem] sm:text-xs text-white/60 truncate max-w-full">
+                {user?.email?.split('@')[0] || 'User'} {/* Shorten email for mobile */}
+              </span>
             </div>
 
-            {/* Avatar */}
-            <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-sm overflow-hidden">
+            {/* Avatar - always visible */}
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-xs sm:text-sm overflow-hidden flex-shrink-0">
               {user?.photoURL ? (
                 <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
               ) : (
@@ -167,51 +186,107 @@ export const HomeScreen: React.FC = () => {
               )}
             </div>
 
-            {/* Past Cases Button - subtle and clean */}
-            <button
-              onClick={() => navigate('/past-cases')}
-              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Past Cases
-            </button>
-
-            {/* Subscription Button - subtle and clean */}
-            <button
-              onClick={() => navigate('/subscription')}
-              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            {/* Mobile-friendly menu button to replace multiple buttons */}
+            <div className="md:hidden relative" ref={mobileMenuRef}>
+              <button
+                className="p-1.5 rounded-md bg-white/10 border border-white/20 text-white"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Manage
-            </button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
 
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all"
-            >
-              Log Out
-            </button>
+              {/* Mobile dropdown menu */}
+              {isMobileMenuOpen && (
+                <div ref={mobileMenuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={() => { navigate('/past-cases'); setIsMobileMenuOpen(false); }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Past Cases
+                  </button>
+                  <button
+                    onClick={() => { navigate('/subscription'); setIsMobileMenuOpen(false); }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Manage Subscription
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop buttons - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2">
+              {/* Past Cases Button */}
+              <button
+                onClick={() => navigate('/past-cases')}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"
+                title="Past Cases"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span className="hidden lg:inline">Past Cases</span>
+              </button>
+
+              {/* Subscription Button */}
+              <button
+                onClick={() => navigate('/subscription')}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all flex items-center gap-1"
+                title="Manage Subscription"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="hidden lg:inline">Manage</span>
+              </button>
+
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-white text-xs font-medium transition-all"
+                title="Log Out"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         </header>
         {/* END HEADER */}
 
         <HeartbeatWave className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-none text-white/10 animate-pulse-heart" />
+
+        {/* Add a backdrop to prevent interaction with background when mobile menu is open */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 z-30" onClick={() => setIsMobileMenuOpen(false)}></div>
+        )}
 
         {/* Main Branding Section */}
         <div className="relative z-10 text-center text-white">

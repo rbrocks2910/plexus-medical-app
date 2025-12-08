@@ -287,7 +287,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { allowed, remaining, resetTime };
   };
 
-  // Check and update subscription status based on case usage
+  // Check and update subscription status based on case usage and expiration
   const checkAndUpdateSubscription = async () => {
     if (!user || !user.usageStats.subscription) return;
 
@@ -299,6 +299,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const maxTotalCases = subscription.maxTotalCases ?? defaultMax;
     const used = subscription.totalCasesUsed || 0;
+
+    // Check if the subscription has expired
+    if (subscription.tier === 'premium' && subscription.endDate) {
+      const now = new Date();
+      const endDate = new Date(subscription.endDate);
+      if (now > endDate) {
+        // Downgrade expired premium subscription to free
+        const downgradeSubscription: Subscription = {
+          tier: 'free',
+          startDate: subscription.startDate,
+          endDate: null,
+          isActive: true,
+          totalCasesUsed: used, // Keep the same usage count
+          maxTotalCases: SUBSCRIPTION_LIMITS.free.total,
+        };
+
+        await updateFirestoreUserSubscription(user.uid, downgradeSubscription);
+        return; // Exit early after downgrading for expiration
+      }
+    }
 
     // Check if the user has exceeded their case limit
     // Downgrade only when they've used MORE than their allowed cases, not when equal

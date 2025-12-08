@@ -21,8 +21,8 @@ export const convertTimestampToDate = (value: Date | string | Timestamp | undefi
 export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any): User => {
   const now = new Date();
   
-  // Convert subscription if it exists
-  let subscription: Subscription | undefined;
+  // Convert subscription if it exists, otherwise create a default free subscription
+  let subscription: Subscription;
   if (firestoreUserData.subscription) {
     subscription = {
       tier: firestoreUserData.subscription.tier || 'free',
@@ -30,7 +30,17 @@ export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any):
       endDate: convertTimestampToDate(firestoreUserData.subscription.endDate) || null,
       isActive: firestoreUserData.subscription.isActive ?? true,
       totalCasesUsed: firestoreUserData.subscription.totalCasesUsed || 0,
-      maxTotalCases: firestoreUserData.subscription.maxTotalCases || 2,
+      maxTotalCases: firestoreUserData.subscription.maxTotalCases || (firestoreUserData.subscription.tier === 'premium' ? 30 : 2),
+    };
+  } else {
+    // Default subscription for users who don't have subscription data in Firestore
+    subscription = {
+      tier: 'free',
+      startDate: now,
+      endDate: null,
+      isActive: true,
+      totalCasesUsed: 0,
+      maxTotalCases: 2,
     };
   }
   

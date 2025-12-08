@@ -301,7 +301,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const used = subscription.totalCasesUsed || 0;
 
     // Check if the user has exceeded their case limit
-    if (used >= maxTotalCases && subscription.tier === 'premium') {
+    // Downgrade only when they've used MORE than their allowed cases, not when equal
+    if (used > maxTotalCases && subscription.tier === 'premium') {
       // Downgrade to free tier
       const downgradeSubscription: Subscription = {
         tier: 'free',

@@ -41,6 +41,7 @@ export const HomeScreen: React.FC = () => {
 
   // AUTH LOGIC
   const { user, signOut, updateSubscription, updateUserStats, canGenerateCase, checkAndUpdateSubscription } = useAuth();
+  // Ensure we always get the latest subscription data
   const subscription = user?.usageStats?.subscription;
 
   const handleLogout = async () => {
@@ -56,6 +57,8 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     // Check subscription status when component mounts
     if (user) {
+      // Force a fresh check of subscription status when returning to home screen
+      // This ensures any changes made during the case flow are reflected
       checkAndUpdateSubscription();
     }
 
@@ -70,6 +73,20 @@ export const HomeScreen: React.FC = () => {
       });
     }, 8000);
     return () => clearInterval(quoteInterval);
+  }, [user, checkAndUpdateSubscription]);
+
+  // Additional effect to refresh subscription when the component comes into focus
+  // This catches cases where the user navigates back to the home screen
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        // Refresh subscription when tab becomes visible again
+        checkAndUpdateSubscription();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user, checkAndUpdateSubscription]);
 
   // Close mobile menu when clicking outside

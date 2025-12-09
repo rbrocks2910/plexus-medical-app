@@ -125,6 +125,9 @@ export const FeedbackScreen: React.FC = () => {
 
           // After saving the completed case, check if the user has exceeded their case limit
           await checkAndUpdateSubscription();
+
+          // Add a small delay to ensure the subscription update is processed by the real-time listener
+          await new Promise(resolve => setTimeout(resolve, 300));
         } catch (error) {
           console.error('Error saving completed case to Firestore:', error);
           // We don't want to block the user experience, so we'll continue even if saving fails

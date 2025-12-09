@@ -18,8 +18,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const prompt = getChatPrompt(chatHistory, patient, diagnosis);
 
-        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const response: GenerateContentResponse = await model.generateContent(prompt);
+        const response: GenerateContentResponse = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt
+        });
 
         const rawText = response.text || '';
         const match = rawText.match(/^\[(.*?)\]\s*(.*)/s);

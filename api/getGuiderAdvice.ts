@@ -35,12 +35,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const prompt = getGuiderPrompt(medicalCase, chatHistory, investigations, differentialDiagnoses);
 
-        const model = ai.getGenerativeModel({
-            model: "gemini-2.5-flash"
-        });
-        const response: GenerateContentResponse = await model.generateContent({
+        const response: GenerateContentResponse = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
             contents: prompt,
-            generationConfig: {
+            config: {
                 responseMimeType: "application/json",
                 responseSchema: guiderAdviceSchema,
             }

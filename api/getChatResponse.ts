@@ -15,27 +15,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Invalid request body. "chatHistory", "patient", and "diagnosis" are required.' });
         }
         const { chatHistory, patient, diagnosis } = body as { chatHistory: ChatMessage[], patient: PatientProfile, diagnosis: string };
-        
+
         const prompt = getChatPrompt(chatHistory, patient, diagnosis);
 
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                thinkingConfig: { thinkingBudget: 0 } 
-            }
+            contents: prompt
         });
 
         const rawText = response.text || '';
         const match = rawText.match(/^\[(.*?)\]\s*(.*)/s);
-        
+
         let result: { text: string; emotionalState: string };
         if (match) {
             result = { emotionalState: match[1], text: match[2].trim() };
         } else {
             result = { text: rawText.trim(), emotionalState: patient.initialEmotionalState };
         }
-        
+
         res.status(200).json(result);
 
     } catch (error) {

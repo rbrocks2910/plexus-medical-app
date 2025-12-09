@@ -44,6 +44,14 @@ export const HomeScreen: React.FC = () => {
   // Ensure we always get the latest subscription data
   const subscription = user?.usageStats?.subscription;
 
+  // Memoize subscription-dependent values to ensure they update when subscription changes
+  const hasActiveSubscription = !!subscription?.isActive;
+  const startButtonLabel = !user
+    ? 'Log in to Begin'
+    : hasActiveSubscription
+    ? 'Begin Simulation'
+    : 'Upgrade to Continue';
+
   const handleLogout = async () => {
     try {
       setIsMobileMenuOpen(false); // Close mobile menu on logout
@@ -55,13 +63,6 @@ export const HomeScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    // Check subscription status when component mounts
-    if (user) {
-      // Force a fresh check of subscription status when returning to home screen
-      // This ensures any changes made during the case flow are reflected
-      checkAndUpdateSubscription();
-    }
-
     setQuoteIndex(Math.floor(Math.random() * CASE_GENERATION_TIPS.length));
     const quoteInterval = setInterval(() => {
       setQuoteIndex(prevIndex => {
@@ -73,21 +74,7 @@ export const HomeScreen: React.FC = () => {
       });
     }, 8000);
     return () => clearInterval(quoteInterval);
-  }, [user, checkAndUpdateSubscription]);
-
-  // Additional effect to refresh subscription when the component comes into focus
-  // This catches cases where the user navigates back to the home screen
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user) {
-        // Refresh subscription when tab becomes visible again
-        checkAndUpdateSubscription();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, checkAndUpdateSubscription]);
+  }, []);
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -142,14 +129,7 @@ export const HomeScreen: React.FC = () => {
     setIsSpecialtyModalOpen(false);
   };
 
-  const hasActiveSubscription = !!subscription?.isActive;
-
   const isStartDisabled = state.isLoading || !hasActiveSubscription;
-  const startButtonLabel = !user
-    ? 'Log in to Begin'
-    : hasActiveSubscription
-    ? 'Begin Simulation'
-    : 'Upgrade to Continue';
 
   return (
     <>

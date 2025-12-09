@@ -5,9 +5,9 @@
  */
 import { GoogleGenAI } from "@google/genai";
 
-// CRITICAL: The API key is sourced EXCLUSIVELY from the environment variable `process.env.API_KEY` on the server.
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set.");
+// CRITICAL: The API key is sourced EXCLUSIVELY from the environment variable `process.env.GEMINI_API_KEY` on the server.
+if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });

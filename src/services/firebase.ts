@@ -3,15 +3,14 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration
-// You'll need to replace these with your actual Firebase project config
 const firebaseConfig = {
-  apiKey: "AIzaSyBUfcB8twN2wwhw5tFuZUG0ldLRtU6k5sU",
-  authDomain: "plexus-medical-app-20c07.firebaseapp.com",
-  projectId: "plexus-medical-app-20c07",
-  storageBucket: "plexus-medical-app-20c07.firebasestorage.app",
-  messagingSenderId: "259815336360",
-  appId: "1:259815336360:web:ca6cbf9080772a545c159d",
-  measurementId: "G-NEG99LZ9D7"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
 };
 
 // Initialize Firebase

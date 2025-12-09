@@ -36,16 +36,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const availableSpecialties = Object.keys(combinedDB);
             specialtyToUse = availableSpecialties[Math.floor(Math.random() * availableSpecialties.length)];
         }
-        
+
         const diseaseList = combinedDB[specialtyToUse as keyof typeof combinedDB] || [];
 
         if (diseaseList.length === 0) {
             return res.status(500).json({ error: `No diseases found for specialty "${specialtyToUse}".` });
         }
-        
+
         let eligibleDiseases = diseaseList.filter(d => !recentDiagnoses.includes(d.name));
         if (eligibleDiseases.length === 0) {
-            eligibleDiseases = diseaseList; 
+            eligibleDiseases = diseaseList;
         }
 
         let selectedPool: { name: string; rarity: string }[] = [];
@@ -55,14 +55,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const uncommonPool = eligibleDiseases.filter(d => d.rarity === 'Uncommon');
             const rarePool = eligibleDiseases.filter(d => d.rarity === 'Rare');
             const veryRarePool = eligibleDiseases.filter(d => d.rarity === 'Very Rare');
-            
+
             const pools = [
                 { pool: commonPool, weight: 0.60 },
                 { pool: uncommonPool, weight: 0.30 },
                 { pool: rarePool, weight: 0.05 },
                 { pool: veryRarePool, weight: 0.05 },
             ];
-            
+
             const availablePools = pools.filter(p => p.pool.length > 0);
 
             if (availablePools.length > 0) {
@@ -88,25 +88,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 selectedPool = eligibleDiseases;
             }
         }
-        
+
         if (selectedPool.length === 0) {
             return res.status(500).json({ error: `No eligible diseases found for specialty "${specialtyToUse}" after filtering.` });
         }
-        
+
         const selectedDisease = selectedPool[Math.floor(Math.random() * selectedPool.length)];
 
         const prompt = getCaseGenerationPrompt(specialtyToUse as Specialty, selectedDisease);
 
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
             model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: medicalCaseSchema,
                 temperature: 1.0,
                 seed: Math.floor(Math.random() * 1000000),
             }
         });
+        const response: GenerateContentResponse = await model.generateContent(prompt);
         const caseData = JSON.parse(response.text || '{}');
 
         if (!caseData || typeof caseData !== 'object') {

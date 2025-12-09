@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Only POST requests allowed' });
     }
-    
+
     const body = req.body;
     // Robust validation of the request body
     if (
@@ -24,26 +24,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: "Invalid request body. Missing or malformed required fields." });
     }
 
-    const { medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses } = body as { 
-        medicalCase: MedicalCase, 
-        userDiagnosis: string, 
-        userConfidence: number, 
-        chatHistory: ChatMessage[], 
-        differentialDiagnoses: string[] 
+    const { medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses } = body as {
+        medicalCase: MedicalCase,
+        userDiagnosis: string,
+        userConfidence: number,
+        chatHistory: ChatMessage[],
+        differentialDiagnoses: string[]
     };
 
     try {
         const prompt = getFeedbackPrompt(medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses);
 
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
             model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: caseFeedbackSchema,
             }
         });
-        
+        const response: GenerateContentResponse = await model.generateContent(prompt);
+
         res.status(200).json(JSON.parse(response.text || '{}'));
 
     } catch (error) {

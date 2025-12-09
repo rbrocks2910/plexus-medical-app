@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Only POST requests allowed' });
     }
-    
+
     const body = req.body;
     // Robust validation of the request body
     if (
@@ -26,24 +26,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { medicalCase, chatHistory, investigations, differentialDiagnoses } = body as { 
-            medicalCase: MedicalCase, 
-            chatHistory: ChatMessage[], 
-            investigations: InvestigationResult[], 
-            differentialDiagnoses: string[] 
+        const { medicalCase, chatHistory, investigations, differentialDiagnoses } = body as {
+            medicalCase: MedicalCase,
+            chatHistory: ChatMessage[],
+            investigations: InvestigationResult[],
+            differentialDiagnoses: string[]
         };
-        
+
         const prompt = getGuiderPrompt(medicalCase, chatHistory, investigations, differentialDiagnoses);
 
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
             model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: guiderAdviceSchema,
             }
         });
-        
+        const response: GenerateContentResponse = await model.generateContent(prompt);
+
         res.status(200).json(JSON.parse(response.text || '{}'));
 
     } catch (error) {

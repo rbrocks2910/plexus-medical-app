@@ -28,22 +28,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ) {
         return res.status(400).json({ error: 'Invalid request body. "testName" (string) and a valid "medicalCase" (object) are required.' });
     }
-    
+
     const { testName, medicalCase } = body as { testName: string, medicalCase: MedicalCase };
 
     try {
         const type = getInvestigationType(testName);
         const reportPrompt = getInvestigationPrompt(testName, medicalCase);
 
-        const reportResponse: GenerateContentResponse = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
             model: "gemini-2.5-flash",
-            contents: reportPrompt,
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: investigationReportSchema,
             }
         });
-        
+        const reportResponse: GenerateContentResponse = await model.generateContent(reportPrompt);
+
         // Explicitly type the parsed JSON to ensure type safety
         const reportData = JSON.parse(reportResponse.text || '{}') as ReportData;
 
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // In a production environment, you could integrate with other image generation services
             // like DALL-E, Stable Diffusion, or Google's Image AI Studio if needed
         }
-        
+
         res.status(200).json(finalResult);
 
     } catch (error) {

@@ -11,4 +11,4 @@ if (!apiKey) {
     throw new Error("No API key found. Please set either GEMINI_API_KEY (recommended) or API_KEY environment variable.");
 }
 
-export const ai = new GoogleGenAI({ apiKey });
+export const ai = new GoogleGenAI(apiKey);

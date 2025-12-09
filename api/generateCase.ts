@@ -98,7 +98,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const prompt = getCaseGenerationPrompt(specialtyToUse as Specialty, selectedDisease);
 
         const model = ai.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash"
+        });
+        const response: GenerateContentResponse = await model.generateContent({
+            contents: prompt,
             generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: medicalCaseSchema,
@@ -106,7 +109,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 seed: Math.floor(Math.random() * 1000000),
             }
         });
-        const response: GenerateContentResponse = await model.generateContent(prompt);
         const caseData = JSON.parse(response.text || '{}');
 
         if (!caseData || typeof caseData !== 'object') {

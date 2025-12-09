@@ -36,13 +36,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const reportPrompt = getInvestigationPrompt(testName, medicalCase);
 
         const model = ai.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash"
+        });
+        const reportResponse: GenerateContentResponse = await model.generateContent({
+            contents: reportPrompt,
             generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: investigationReportSchema,
             }
         });
-        const reportResponse: GenerateContentResponse = await model.generateContent(reportPrompt);
 
         // Explicitly type the parsed JSON to ensure type safety
         const reportData = JSON.parse(reportResponse.text || '{}') as ReportData;

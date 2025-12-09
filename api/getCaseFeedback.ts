@@ -36,13 +36,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const prompt = getFeedbackPrompt(medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses);
 
         const model = ai.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash"
+        });
+        const response: GenerateContentResponse = await model.generateContent({
+            contents: prompt,
             generationConfig: {
                 responseMimeType: "application/json",
                 responseSchema: caseFeedbackSchema,
             }
         });
-        const response: GenerateContentResponse = await model.generateContent(prompt);
 
         res.status(200).json(JSON.parse(response.text || '{}'));
 

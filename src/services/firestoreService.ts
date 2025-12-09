@@ -58,10 +58,17 @@ export const setUserSubscription = async (userId: string, subscription: Subscrip
 export const updateUserSubscription = async (userId: string, subscriptionUpdate: Partial<Subscription>): Promise<void> => {
   try {
     const userDocRef = doc(db, 'users', userId);
-    await updateDoc(userDocRef, {
-      'subscription': { ...subscriptionUpdate },
+    // Use dot notation to update specific fields within the subscription object to avoid overwriting the entire object
+    const updateData: any = {
       'updatedAt': serverTimestamp()
+    };
+
+    // Add each subscription field to the update data using dot notation
+    Object.entries(subscriptionUpdate).forEach(([key, value]) => {
+      updateData[`subscription.${key}`] = value;
     });
+
+    await updateDoc(userDocRef, updateData);
   } catch (error) {
     console.error('Error updating user subscription:', error);
     throw error;

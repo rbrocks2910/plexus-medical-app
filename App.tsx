@@ -34,69 +34,72 @@ import { SubscriptionScreen } from './src/components/screens/SubscriptionScreen'
 import { PastCasesScreen } from './src/components/screens/PastCasesScreen';
 import { CompletedCaseDetailScreen } from './src/components/screens/CompletedCaseDetailScreen';
 import { ProtectedRoute } from './src/components/ui/ProtectedRoute';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const App: React.FC = () => {
   return (
-    // The AuthProvider handles user authentication and must wrap everything
-    <AuthProvider>
-      {/* The AppProvider makes the global state accessible to all child components. */}
-      <AppProvider>
-        {/* HashRouter manages the client-side routing. */}
-        <HashRouter>
-          {/* The Routes component wraps all the individual Route definitions. */}
-          <Routes>
-            {/* Public login route */}
-            <Route path="/login" element={<LoginScreen />} />
+    <ErrorBoundary>
+      {/* The AuthProvider handles user authentication and must wrap everything */}
+      <AuthProvider>
+        {/* The AppProvider makes the global state accessible to all child components. */}
+        <AppProvider>
+          {/* HashRouter manages the client-side routing. */}
+          <HashRouter>
+            {/* The Routes component wraps all the individual Route definitions. */}
+            <Routes>
+              {/* Public login route */}
+              <Route path="/login" element={<LoginScreen />} />
 
-            {/* Protected routes - require authentication */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <HomeScreen />
-              </ProtectedRoute>
-            } />
+              {/* Protected routes - require authentication */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <HomeScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Route for the main simulation screen. `:caseId` is a URL parameter that will be available
-                to the CaseScreen component, allowing it to fetch the correct case data. */}
-            <Route path="/case/:caseId" element={
-              <ProtectedRoute>
-                <CaseScreen />
-              </ProtectedRoute>
-            } />
+              {/* Route for the main simulation screen. `:caseId` is a URL parameter that will be available
+                  to the CaseScreen component, allowing it to fetch the correct case data. */}
+              <Route path="/case/:caseId" element={
+                <ProtectedRoute>
+                  <CaseScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Route for the feedback screen, also using the `caseId` parameter. */}
-            <Route path="/feedback/:caseId" element={
-              <ProtectedRoute>
-                <FeedbackScreen />
-              </ProtectedRoute>
-            } />
+              {/* Route for the feedback screen, also using the `caseId` parameter. */}
+              <Route path="/feedback/:caseId" element={
+                <ProtectedRoute>
+                  <FeedbackScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Subscription management route */}
-            <Route path="/subscription" element={
-              <ProtectedRoute>
-                <SubscriptionScreen />
-              </ProtectedRoute>
-            } />
+              {/* Subscription management route */}
+              <Route path="/subscription" element={
+                <ProtectedRoute>
+                  <SubscriptionScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Past Cases route */}
-            <Route path="/past-cases" element={
-              <ProtectedRoute>
-                <PastCasesScreen />
-              </ProtectedRoute>
-            } />
+              {/* Past Cases route */}
+              <Route path="/past-cases" element={
+                <ProtectedRoute>
+                  <PastCasesScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Completed Case Detail route */}
-            <Route path="/past-cases/:caseId" element={
-              <ProtectedRoute>
-                <CompletedCaseDetailScreen />
-              </ProtectedRoute>
-            } />
+              {/* Completed Case Detail route */}
+              <Route path="/past-cases/:caseId" element={
+                <ProtectedRoute>
+                  <CompletedCaseDetailScreen />
+                </ProtectedRoute>
+              } />
 
-            {/* Fallback route to redirect any unmatched URLs to the home page. */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </HashRouter>
-      </AppProvider>
-    </AuthProvider>
+              {/* Fallback route to redirect any unmatched URLs to the home page. */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </HashRouter>
+        </AppProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

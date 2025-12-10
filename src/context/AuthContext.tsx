@@ -23,6 +23,12 @@ import {
 } from '../services/firestoreService';
 import { convertFirestoreUser } from '../utils/firestoreHelpers';
 
+// Check if Firebase services are available
+const isFirebaseAvailable = auth !== null && db !== null && googleProvider !== undefined;
+if (!isFirebaseAvailable) {
+  console.warn('Firebase services are not available. Authentication will not work.');
+}
+
 // Default limits for rate limiting
 const DEFAULT_RATE_LIMITS = {
   api_request: {

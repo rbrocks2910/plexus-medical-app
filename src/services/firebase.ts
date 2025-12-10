@@ -13,19 +13,49 @@ const firebaseConfig = {
   measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+console.log('Firebase config loaded:', {
+  apiKey: firebaseConfig.apiKey ? '***HIDDEN***' : 'MISSING',
+  authDomain: firebaseConfig.authDomain || 'MISSING',
+  projectId: firebaseConfig.projectId || 'MISSING',
+  storageBucket: firebaseConfig.storageBucket || 'MISSING',
+  messagingSenderId: firebaseConfig.messagingSenderId || 'MISSING',
+  appId: firebaseConfig.appId ? '***HIDDEN***' : 'MISSING'
+});
+
+// Only initialize Firebase if the config is present
+let app;
+if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
+  try {
+    app = initializeApp(firebaseConfig);
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    // Create a placeholder app to prevent other parts of the app from breaking
+    // This is a simple fallback for testing
+    app = { options: firebaseConfig };
+  }
+} else {
+  console.error('Firebase config is incomplete. Missing required values.');
+  // Create a placeholder for testing when config is missing
+  app = { options: firebaseConfig };
+}
 
 // Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+export const auth = app.options ? null : getAuth(app);
 
 // Initialize Firestore
-export const db = getFirestore(app);
+export const db = app.options ? null : getFirestore(app);
 
-// Initialize Google Auth Provider
-export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+// Initialize Google Auth Provider only if Firebase is properly initialized
+export let googleProvider: GoogleAuthProvider | undefined;
+if (!app.options) { // Firebase was properly initialized
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
+} else {
+  console.warn('Firebase not initialized, Google Auth Provider not created');
+  googleProvider = undefined;
+}
 
 export default app;

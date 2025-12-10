@@ -95,6 +95,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Firebase auth state listener
   useEffect(() => {
+    // Only set up auth listener if Firebase is available
+    if (!isFirebaseAvailable) {
+      console.warn('Firebase not available, skipping auth state listener setup');
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -131,7 +138,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     return () => {
-      unsubscribeAuth();
+      // Only call unsubscribeAuth if Firebase is available and auth exists
+      if (isFirebaseAvailable && typeof unsubscribeAuth === 'function') {
+        unsubscribeAuth();
+      }
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
@@ -140,7 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Update user usage statistics
   const updateUserStats = async (stats: Partial<UserUsageStats>) => {
-    if (!user) return;
+    if (!user || !isFirebaseAvailable) return;
 
     try {
       // Update in Firestore
@@ -155,7 +165,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Update subscription information
   const updateSubscription = async (subscriptionUpdate: Partial<Subscription>) => {
-    if (!user) return;
+    if (!user || !isFirebaseAvailable) return;
 
     try {
       // Update in Firestore
@@ -170,6 +180,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign in with Google
   const signInWithGoogle = async () => {
+    if (!isFirebaseAvailable) {
+      console.error('Firebase not available. Cannot sign in with Google.');
+      setError('Authentication service is not available. Please check console for details.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -184,6 +201,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign out
   const signOut = async () => {
+    if (!isFirebaseAvailable) {
+      console.error('Firebase not available. Cannot sign out.');
+      setError('Authentication service is not available. Please check console for details.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       await firebaseSignOut(auth);
@@ -198,7 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Subscribe to premium tier
   // ✅ Now sets a TOTAL limit of 30 for the plan duration
   const subscribeToPremium = async () => {
-    if (!user) return;
+    if (!user || !isFirebaseAvailable) return;
 
     try {
       const now = new Date();
@@ -268,7 +292,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Check if user can generate a case based on subscription limits
   // ✅ Now uses TOTAL cases (free: 2, premium: 30), no daily reset for premium
   const canGenerateCase = async (): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> => {
-    if (!user || !user.usageStats.subscription) {
+    if (!user || !user.usageStats.subscription || !isFirebaseAvailable) {
       return { allowed: false, remaining: 0, resetTime: new Date() };
     }
 
@@ -295,7 +319,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check and update subscription status based on case usage and expiration
   const checkAndUpdateSubscription = async () => {
-    if (!user || !user.usageStats.subscription) return;
+    if (!user || !user.usageStats.subscription || !isFirebaseAvailable) return;
 
     const subscription = user.usageStats.subscription;
     const defaultMax =

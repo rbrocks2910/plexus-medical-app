@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../ui/Card';
+import { auth } from '../../services/firebase';
 
 declare global {
   interface Window {
@@ -60,7 +61,16 @@ export const SubscriptionScreen: React.FC = () => {
       }
 
       // 2. Get Firebase ID token for authentication
-      const idToken = await user.getIdToken();
+      // Check if auth service is available before getting token
+      if (!auth) {
+        throw new Error('Authentication service not available');
+      }
+
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('No authenticated user found');
+      }
+      const idToken = await currentUser.getIdToken();
 
       // Create order via backend with authentication
       const orderRes = await fetch('/api/createRazorpayOrder', {
@@ -101,7 +111,15 @@ export const SubscriptionScreen: React.FC = () => {
         handler: async (response: any) => {
           try {
             // 4. Get fresh Firebase ID token for verification
-            const idToken = await user.getIdToken();
+            if (!auth) {
+              throw new Error('Authentication service not available');
+            }
+
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+              throw new Error('No authenticated user found');
+            }
+            const idToken = await currentUser.getIdToken();
 
             // Verify payment with backend with authentication
             const verifyRes = await fetch('/api/verifyRazorpayPayment', {

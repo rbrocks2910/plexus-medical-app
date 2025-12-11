@@ -221,6 +221,11 @@ export const saveCompletedCaseWithDetails = async (
  */
 export const getCompletedCases = async (userId: string): Promise<CompletedCase[]> => {
   try {
+    // Check if Firebase is properly initialized before attempting to query
+    if (!db) {
+      throw new Error('Firebase database is not initialized');
+    }
+
     const q = query(
       collection(db, 'users', userId, 'completedCases'),
       orderBy('createdAt', 'desc')

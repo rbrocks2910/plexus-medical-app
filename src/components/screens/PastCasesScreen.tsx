@@ -31,19 +31,19 @@ const getRarityColor = (rarity: string) => {
 
 const getCorrectnessIcon = (correctness: string) => {
   switch (correctness) {
-    case 'Correct': 
+    case 'Correct':
       return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
       </svg>;
-    case 'Partially Correct': 
+    case 'Partially Correct':
       return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
       </svg>;
-    case 'Incorrect': 
+    case 'Incorrect':
       return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
       </svg>;
-    default: 
+    default:
       return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
       </svg>;
@@ -68,6 +68,11 @@ export const PastCasesScreen: React.FC = () => {
       const fetchCases = async () => {
         try {
           setIsLoading(true);
+          // Check if Firebase is properly initialized before attempting to fetch cases
+          const { isFirebaseReady } = await import('../../services/firebase');
+          if (!isFirebaseReady()) {
+            throw new Error('Firebase is not properly initialized. Please check your configuration.');
+          }
           const userCases = await getCompletedCases(user.uid);
           setCases(userCases);
         } catch (err) {
@@ -117,8 +122,8 @@ export const PastCasesScreen: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-3 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             Retry
@@ -161,8 +166,8 @@ export const PastCasesScreen: React.FC = () => {
             </svg>
             <h3 className="text-xl font-semibold text-gray-700 mt-4">No completed cases yet</h3>
             <p className="text-gray-500 mt-2 mb-6">Start your first case to see it appear here</p>
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="px-6 py-3 bg-plexus-blue text-white font-bold rounded-lg hover:bg-plexus-blue-dark transition-colors"
             >
               Start New Case

@@ -71,6 +71,11 @@ export const auth = isFirebaseInitialized ? getAuth(app) : null;
 // Initialize Firestore
 export const db = isFirebaseInitialized ? getFirestore(app) : null;
 
+// Helper function to check if Firebase is properly initialized
+export const isFirebaseReady = (): boolean => {
+  return isFirebaseInitialized && db !== null;
+};
+
 // Initialize Google Auth Provider only if Firebase is properly initialized
 export let googleProvider: GoogleAuthProvider | undefined;
 if (isFirebaseInitialized) {

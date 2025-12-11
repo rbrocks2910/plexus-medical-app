@@ -153,6 +153,13 @@ export const saveCompletedCase = async (
   feedback: CaseFeedback
 ): Promise<string> => {
   try {
+    // Check if case already exists to prevent duplicates
+    const alreadyExists = await isCaseCompleted(userId, caseId);
+    if (alreadyExists) {
+      console.log(`Case ${caseId} already exists for user ${userId}. Not saving duplicate.`);
+      return caseId; // Return the existing case ID
+    }
+
     // Remove the id from medicalCase to avoid conflicts with Firestore's document ID
     const { id, ...medicalCaseWithoutId } = medicalCase;
     const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
@@ -192,6 +199,13 @@ export const saveCompletedCaseWithDetails = async (
   differentialDiagnoses: string[]
 ): Promise<string> => {
   try {
+    // Check if case already exists to prevent duplicates
+    const alreadyExists = await isCaseCompleted(userId, caseId);
+    if (alreadyExists) {
+      console.log(`Case ${caseId} already exists for user ${userId}. Not saving duplicate.`);
+      return caseId; // Return the existing case ID
+    }
+
     // Remove the id from medicalCase to avoid conflicts with Firestore's document ID
     const { id, ...medicalCaseWithoutId } = medicalCase;
     const completedCase: Omit<CompletedCase, 'id' | 'userId'> = {
@@ -212,6 +226,20 @@ export const saveCompletedCaseWithDetails = async (
     return docRef.id;
   } catch (error) {
     console.error('Error saving completed case with details:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if a case is already completed by the user
+ */
+export const isCaseCompleted = async (userId: string, caseId: string): Promise<boolean> => {
+  try {
+    const docRef = doc(db, 'users', userId, 'completedCases', caseId);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists();
+  } catch (error) {
+    console.error('Error checking if case is completed:', error);
     throw error;
   }
 };

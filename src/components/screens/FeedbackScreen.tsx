@@ -122,12 +122,6 @@ export const FeedbackScreen: React.FC = () => {
             investigations,
             differentialDiagnoses
           );
-
-          // After saving the completed case, check if the user has exceeded their case limit
-          await checkAndUpdateSubscription();
-
-          // Add a small delay to ensure the subscription update is processed by the real-time listener
-          await new Promise(resolve => setTimeout(resolve, 300));
         } catch (error) {
           console.error('Error saving completed case to Firestore:', error);
           // We don't want to block the user experience, so we'll continue even if saving fails
@@ -137,7 +131,25 @@ export const FeedbackScreen: React.FC = () => {
       setIsLoading(false);
     };
     fetchFeedback();
-  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate, user, checkAndUpdateSubscription]);
+  }, [caseId, userDiagnosis, confidence, chatHistory, differentialDiagnoses, getCaseById, navigate]); // Removed user and checkAndUpdateSubscription to prevent multiple saves
+
+  // Effect hook to update subscription after feedback is loaded and case is saved
+  useEffect(() => {
+    if (feedback && user) {
+      const updateSubscription = async () => {
+        try {
+          // After saving the completed case, check if the user has exceeded their case limit
+          await checkAndUpdateSubscription();
+
+          // Add a small delay to ensure the subscription update is processed by the real-time listener
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error('Error updating subscription:', error);
+        }
+      };
+      updateSubscription();
+    }
+  }, [feedback, user, checkAndUpdateSubscription]);
 
   // Helper function to get dynamic Tailwind CSS classes based on diagnostic correctness.
   const getCorrectnessColor = (correctness: CaseFeedback['correctness']) => {

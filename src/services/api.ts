@@ -16,6 +16,7 @@ import {
   CaseFeedback,
 } from '../types';
 import { getDummyCase } from './dummyData';
+import { auth } from './firebase';
 
 /**
  * Generates a patient case by calling the `/api/generateCase` endpoint.
@@ -30,9 +31,19 @@ export const generatePatientCase = async (
   recentDiagnoses: string[] = []
 ): Promise<MedicalCase> => {
   try {
+    // Get the Firebase ID token for authentication
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be authenticated to generate cases');
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/generateCase', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ specialty, rarity, recentDiagnoses }),
     });
 
@@ -63,9 +74,19 @@ export const getChatResponse = async (
   diagnosis: string
 ): Promise<{ text: string; emotionalState: string }> => {
   try {
+    // Get the Firebase ID token for authentication
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be authenticated to get chat responses');
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/getChatResponse', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ chatHistory, patient, diagnosis }),
     });
 
@@ -96,9 +117,19 @@ export const getInvestigationResult = async (
   medicalCase: MedicalCase
 ): Promise<InvestigationResult> => {
   try {
+    // Get the Firebase ID token for authentication
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be authenticated to get investigation results');
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/getInvestigationResult', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ testName, medicalCase }),
     });
 
@@ -131,9 +162,19 @@ export const getCaseFeedback = async (
   differentialDiagnoses: string[]
 ): Promise<CaseFeedback> => {
   try {
+    // Get the Firebase ID token for authentication
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be authenticated to get case feedback');
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/getCaseFeedback', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses }),
     });
 
@@ -169,9 +210,19 @@ export const getGuiderAdvice = async (
   differentialDiagnoses: string[]
 ): Promise<{ critique: string[]; suggestion: string; rationale: string }> => {
   try {
+    // Get the Firebase ID token for authentication
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be authenticated to get guider advice');
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/getGuiderAdvice', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ medicalCase, chatHistory, investigations, differentialDiagnoses }),
     });
 

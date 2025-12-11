@@ -6,6 +6,7 @@ import { guiderAdviceSchema } from './_lib/schemas.js';
 import { MedicalCase, ChatMessage, InvestigationResult } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import { FirebaseAdminService } from './_lib/firebaseAdminService.js';
 import { validateTextField, validateArray, ValidationResult } from './_lib/validation.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -109,6 +110,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 responseSchema: guiderAdviceSchema,
             }
         });
+
+        // Update API usage statistics after successful processing
+        try {
+          await FirebaseAdminService.incrementApiUsage(authResult.userId);
+        } catch (usageError) {
+          console.error('Error updating API usage stats:', usageError);
+          // Don't fail the request just because we couldn't update usage stats
+        }
 
         res.status(200).json(JSON.parse(response.text || '{}'));
 

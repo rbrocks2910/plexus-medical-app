@@ -7,6 +7,7 @@ import { InvestigationResult, MedicalCase } from './_lib/types.js';
 import { getInvestigationType } from './_lib/constants.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import { FirebaseAdminService } from './_lib/firebaseAdminService.js';
 import {
   validateTextField,
   ValidationResult
@@ -105,6 +106,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // The original implementation attempted to use a non-existent generateImages method
             // In a production environment, you could integrate with other image generation services
             // like DALL-E, Stable Diffusion, or Google's Image AI Studio if needed
+        }
+
+        // Update API usage statistics after successful processing
+        try {
+          await FirebaseAdminService.incrementApiUsage(authResult.userId);
+        } catch (usageError) {
+          console.error('Error updating API usage stats:', usageError);
+          // Don't fail the request just because we couldn't update usage stats
         }
 
         res.status(200).json(finalResult);

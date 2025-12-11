@@ -9,7 +9,7 @@ if (!admin.apps.length) {
       const serviceAccount = JSON.parse(
         Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString()
       );
-      
+
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
@@ -102,7 +102,7 @@ export class FirebaseAdminService {
         .collection(`users/${userId}/completedCases`)
         .orderBy('createdAt', 'desc')
         .get();
-      
+
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -128,7 +128,7 @@ export class FirebaseAdminService {
       throw error;
     }
   }
-  
+
   /**
    * Update user stats
    * @param userId - The ID of the user to update
@@ -145,7 +145,61 @@ export class FirebaseAdminService {
       throw error;
     }
   }
-  
+
+  /**
+   * Increment API usage statistics for a user
+   * @param userId - The ID of the user
+   */
+  static async incrementApiUsage(userId: string): Promise<void> {
+    try {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+      const hourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()); // Start of current hour
+      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1); // Start of next hour
+
+      await db.collection('users').doc(userId).update({
+        'usageStats.apiRequestsToday': admin.firestore.FieldValue.increment(1),
+        'usageStats.apiRequestsThisHour': admin.firestore.FieldValue.increment(1),
+        'updatedAt': admin.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error(`Error incrementing API usage for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset daily usage statistics at the start of each day
+   * @param userId - The ID of the user
+   */
+  static async resetDailyUsage(userId: string): Promise<void> {
+    try {
+      await db.collection('users').doc(userId).update({
+        'usageStats.apiRequestsToday': 0,
+        'updatedAt': admin.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error(`Error resetting daily usage for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset hourly usage statistics at the start of each hour
+   * @param userId - The ID of the user
+   */
+  static async resetHourlyUsage(userId: string): Promise<void> {
+    try {
+      await db.collection('users').doc(userId).update({
+        'usageStats.apiRequestsThisHour': 0,
+        'updatedAt': admin.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error(`Error resetting hourly usage for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
   /**
    * Create or update user profile
    * @param userId - The ID of the user
@@ -162,7 +216,7 @@ export class FirebaseAdminService {
       throw error;
     }
   }
-  
+
   /**
    * Get Firestore instance for direct access if needed
    */

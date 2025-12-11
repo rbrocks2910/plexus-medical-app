@@ -48,19 +48,31 @@ if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.project
   app = { options: firebaseConfig };
 }
 
+// Check if Firebase was properly initialized by checking the app object structure
+const isFirebaseInitialized = app && app.options === undefined;
+
+console.log('Firebase app object:', app);
+console.log('Is Firebase properly initialized:', isFirebaseInitialized);
+
 // Initialize Firebase Authentication and get a reference to the service
-export const auth = app.options ? null : getAuth(app);
+export const auth = isFirebaseInitialized ? getAuth(app) : null;
 
 // Initialize Firestore
-export const db = app.options ? null : getFirestore(app);
+export const db = isFirebaseInitialized ? getFirestore(app) : null;
 
 // Initialize Google Auth Provider only if Firebase is properly initialized
 export let googleProvider: GoogleAuthProvider | undefined;
-if (!app.options) { // Firebase was properly initialized
-  googleProvider = new GoogleAuthProvider();
-  googleProvider.setCustomParameters({
-    prompt: 'select_account'
-  });
+if (isFirebaseInitialized) {
+  try {
+    googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    console.log('Google Auth Provider created successfully');
+  } catch (error) {
+    console.error('Error creating Google Auth Provider:', error);
+    googleProvider = undefined;
+  }
 } else {
   console.warn('Firebase not initialized, Google Auth Provider not created');
   googleProvider = undefined;

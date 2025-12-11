@@ -18,8 +18,8 @@ if (!admin.apps.length) {
       // Initialize with individual service account components
       admin.initializeApp({
         credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId: process.env.FIREBASE_PROJECT_ID || undefined,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL || undefined,
           privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         }),
       });

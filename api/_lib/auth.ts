@@ -4,22 +4,34 @@ import admin from 'firebase-admin';
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
-    // Initialize with service account from environment variables
-    // For this to work in production, you'll need to set up the service account credentials
-    // as environment variables in Vercel (e.g., GOOGLE_APPLICATION_CREDENTIALS)
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
+    // Check if we have service account credentials in environment variables
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      // Initialize with service account from base64 encoded JSON in environment variable
+      const serviceAccount = JSON.parse(
+        Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString()
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PROJECT_ID) {
+      // Initialize with individual service account components
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+      });
+    } else {
+      // Use application default credentials (for deployment on Google Cloud)
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
   } catch (error) {
-    console.warn('Firebase Admin SDK initialization failed. Using application default.', error);
-    // Fallback to application default credentials
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
+    console.error('Firebase Admin SDK initialization failed:', error);
+    throw new Error('Failed to initialize Firebase Admin SDK');
   }
 }
 

@@ -2,30 +2,9 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { verifyAuth, AuthResult } from './_lib/auth';
 import { rateLimit } from './_lib/rateLimit';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase if not already initialized
-let app;
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
-
-const db = getFirestore(app);
+import { FirebaseAdminService } from './_lib/firebaseAdminService';
 
 // Subscription limits for case generation
 const SUBSCRIPTION_LIMITS = {
@@ -120,13 +99,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (success && userId) {
-      // Update user's subscription to premium in Firestore
+      // Update user's subscription to premium in Firestore using Admin service
       try {
-        const userDocRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userDocRef);
+        // Get current user data to preserve existing usage stats
+        const userData = await FirebaseAdminService.getUser(userId);
 
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
+        if (userData) {
           const now = new Date();
 
           // Get current usage stats to preserve them
@@ -144,10 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             maxTotalCases: SUBSCRIPTION_LIMITS.premium.total, // 30 cases total per plan
           };
 
-          // Update the user's subscription in Firestore
-          await setDoc(userDocRef, {
-            subscription: premiumSubscription,
-          }, { merge: true });
+          // Update the user's subscription in Firestore using Admin service
+          await FirebaseAdminService.updateUserSubscription(userId, premiumSubscription);
 
           console.log(`User ${userId} subscription updated to premium`);
         } else {

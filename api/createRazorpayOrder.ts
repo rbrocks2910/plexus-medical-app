@@ -87,6 +87,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const currencyValidation = validateCurrency(currency || 'INR');
     const planValidation = validatePlan(plan || 'premium');
 
+    console.log('Validation results:', {
+      userId: { value: userId, validation: userIdValidation },
+      amount: { value: amount, validation: amountValidation },
+      currency: { value: currency, validation: currencyValidation },
+      plan: { value: plan, validation: planValidation }
+    });
+
     // Combine validation results
     const validationErrors: string[] = [];
 
@@ -107,6 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (validationErrors.length > 0) {
+      console.error('Validation failed:', validationErrors);
       return res.status(400).json({
         error: 'Validation failed',
         details: validationErrors

@@ -24,13 +24,23 @@ if (!admin.apps.length) {
         }),
       });
     } else {
-      // Use application default credentials (for deployment on Google Cloud)
+      // Fallback: Use application default credentials
+      // This might work in some hosting environments or could be used with a custom token
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
+        projectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
       });
     }
   } catch (error) {
     console.error('Firebase Admin SDK initialization failed:', error);
+    // In case of failure, log the specific environment variables for debugging
+    console.log('Environment variables available:', {
+      hasServiceAccountKey: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+      hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+      hasViteProjectId: !!process.env.VITE_FIREBASE_PROJECT_ID,
+    });
     throw new Error('Failed to initialize Firebase Admin SDK');
   }
 }

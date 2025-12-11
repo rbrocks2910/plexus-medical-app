@@ -47,7 +47,7 @@ export class FirebaseAdminService {
   static async getUser(userId: string): Promise<DocumentData | null> {
     try {
       const userDoc = await db.collection('users').doc(userId).get();
-      return userDoc.exists ? userDoc.data() : null;
+      return userDoc.exists ? userDoc.data() as DocumentData : null;
     } catch (error) {
       console.error(`Error getting user ${userId}:`, error);
       throw error;
@@ -122,7 +122,7 @@ export class FirebaseAdminService {
   static async getCompletedCaseById(userId: string, caseId: string): Promise<DocumentData | undefined> {
     try {
       const doc = await db.collection(`users/${userId}/completedCases`).doc(caseId).get();
-      return doc.exists ? { id: doc.id, ...doc.data() } : undefined;
+      return doc.exists ? { id: doc.id, ...doc.data() as DocumentData } : undefined;
     } catch (error) {
       console.error(`Error getting completed case ${caseId} for user ${userId}:`, error);
       throw error;

@@ -28,7 +28,7 @@ if (!admin.apps.length) {
       // This might work in some hosting environments or could be used with a custom token
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
-        projectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
+        projectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || undefined,
       });
     }
   } catch (error) {

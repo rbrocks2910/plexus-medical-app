@@ -7,6 +7,7 @@ import { medicalCaseSchema } from './_lib/schemas.js';
 import { Specialty, RaritySelection } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import { validateSpecialty, validateTextField, ValidationResult } from './_lib/validation.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -34,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const body = req.body;
-        // Robust validation of the request body
+        // Basic validation of the request body structure
         if (
             !body ||
             typeof body !== 'object' ||
@@ -43,6 +44,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             (body.recentDiagnoses && !Array.isArray(body.recentDiagnoses))
         ) {
              return res.status(400).json({ error: 'Invalid request body. "specialty" (string), "rarity" (string), and optional "recentDiagnoses" (array) are required.' });
+        }
+
+        // Detailed validation of input parameters
+        const specialtyValidation = validateSpecialty(body.specialty);
+        const rarityValidation = validateTextField(body.rarity, 50);
+        const recentDiagnosesValidation = Array.isArray(body.recentDiagnoses)
+          ? { isValid: true, errors: [] } as ValidationResult  // Basic validation, we could add more specific validation
+          : { isValid: false, errors: ['recentDiagnoses must be an array'] };
+
+        // Combine validation results
+        const validationErrors: string[] = [];
+
+        if (!specialtyValidation.isValid) {
+          validationErrors.push(...specialtyValidation.errors);
+        }
+
+        if (!rarityValidation.isValid) {
+          validationErrors.push(...rarityValidation.errors);
+        }
+
+        if (!recentDiagnosesValidation.isValid) {
+          validationErrors.push(...recentDiagnosesValidation.errors);
+        }
+
+        if (validationErrors.length > 0) {
+          return res.status(400).json({
+            error: 'Validation failed',
+            details: validationErrors
+          });
         }
         const { specialty, rarity, recentDiagnoses = [] } = body as { specialty: Specialty, rarity: RaritySelection, recentDiagnoses?: string[] };
 

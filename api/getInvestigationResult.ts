@@ -7,6 +7,10 @@ import { InvestigationResult, MedicalCase } from './_lib/types.js';
 import { getInvestigationType } from './_lib/constants.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import {
+  validateTextField,
+  ValidationResult
+} from './_lib/validation.js';
 
 interface ReportData {
     result: string;
@@ -48,6 +52,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         typeof body.medicalCase.underlyingDiagnosis !== 'string'
     ) {
         return res.status(400).json({ error: 'Invalid request body. "testName" (string) and a valid "medicalCase" (object) are required.' });
+    }
+
+    // Detailed validation of input parameters
+    const testNameValidation = validateTextField(body.testName, 200);
+    const underlyingDiagnosisValidation = validateTextField(body.medicalCase.underlyingDiagnosis, 500);
+
+    // Combine validation results
+    const validationErrors: string[] = [];
+
+    if (!testNameValidation.isValid) {
+      validationErrors.push(...testNameValidation.errors);
+    }
+
+    if (!underlyingDiagnosisValidation.isValid) {
+      validationErrors.push(...underlyingDiagnosisValidation.errors);
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validationErrors
+      });
     }
 
     const { testName, medicalCase } = body as { testName: string, medicalCase: MedicalCase };

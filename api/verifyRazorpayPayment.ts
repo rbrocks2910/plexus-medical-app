@@ -5,6 +5,13 @@ import crypto from 'crypto';
 import { verifyAuth, AuthResult } from './_lib/auth';
 import { rateLimit } from './_lib/rateLimit';
 import { FirebaseAdminService } from './_lib/firebaseAdminService';
+import {
+  validateRazorpayOrderId,
+  validateRazorpayPaymentId,
+  validateRazorpaySignature,
+  validateUserId,
+  ValidationResult
+} from './_lib/validation';
 
 // Subscription limits for case generation
 const SUBSCRIPTION_LIMITS = {
@@ -65,10 +72,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId) {
+    // Validate all input parameters
+    const orderIdValidation = validateRazorpayOrderId(razorpay_order_id);
+    const paymentIdValidation = validateRazorpayPaymentId(razorpay_payment_id);
+    const signatureValidation = validateRazorpaySignature(razorpay_signature);
+    const userIdValidation = validateUserId(userId);
+
+    // Combine validation results
+    const validationErrors: string[] = [];
+
+    if (!orderIdValidation.isValid) {
+      validationErrors.push(...orderIdValidation.errors);
+    }
+
+    if (!paymentIdValidation.isValid) {
+      validationErrors.push(...paymentIdValidation.errors);
+    }
+
+    if (!signatureValidation.isValid) {
+      validationErrors.push(...signatureValidation.errors);
+    }
+
+    if (!userIdValidation.isValid) {
+      validationErrors.push(...userIdValidation.errors);
+    }
+
+    if (validationErrors.length > 0) {
+      console.error('Input validation failed:', validationErrors);
       return res.status(400).json({
         success: false,
-        message: 'Missing required parameters: razorpay_order_id, razorpay_payment_id, razorpay_signature, or userId'
+        message: 'Validation failed',
+        details: validationErrors
       });
     }
 

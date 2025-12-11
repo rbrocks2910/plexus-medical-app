@@ -6,6 +6,12 @@ import { caseFeedbackSchema } from './_lib/schemas.js';
 import { MedicalCase, ChatMessage } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import {
+  validateTextField,
+  validateConfidence,
+  validateArray,
+  ValidationResult
+} from './_lib/validation.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -43,6 +49,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         !Array.isArray(body.differentialDiagnoses)
     ) {
         return res.status(400).json({ error: "Invalid request body. Missing or malformed required fields." });
+    }
+
+    // Detailed validation of input parameters
+    const userDiagnosisValidation = validateTextField(body.userDiagnosis, 500);
+    const userConfidenceValidation = validateConfidence(body.userConfidence);
+    const differentialDiagnosesValidation = validateArray(
+      body.differentialDiagnoses,
+      (item: string) => validateTextField(item, 200),
+      20
+    );
+    const chatHistoryValidation = validateArray(
+      body.chatHistory,
+      (message: ChatMessage) => validateTextField(message.text, 2000),
+      50
+    );
+
+    // Combine validation results
+    const validationErrors: string[] = [];
+
+    if (!userDiagnosisValidation.isValid) {
+      validationErrors.push(...userDiagnosisValidation.errors);
+    }
+
+    if (!userConfidenceValidation.isValid) {
+      validationErrors.push(...userConfidenceValidation.errors);
+    }
+
+    if (!differentialDiagnosesValidation.isValid) {
+      validationErrors.push(...differentialDiagnosesValidation.errors);
+    }
+
+    if (!chatHistoryValidation.isValid) {
+      validationErrors.push(...chatHistoryValidation.errors);
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validationErrors
+      });
     }
 
     const { medicalCase, userDiagnosis, userConfidence, chatHistory, differentialDiagnoses } = body as {

@@ -5,6 +5,11 @@ import { getChatPrompt } from './_lib/prompts.js';
 import { ChatMessage, PatientProfile } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
 import { rateLimit } from './_lib/rateLimit.js';
+import {
+  validateTextField,
+  validateArray,
+  ValidationResult
+} from './_lib/validation.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -35,6 +40,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (typeof body !== 'object' || body === null || !Array.isArray(body.chatHistory) || !body.patient || typeof body.diagnosis !== 'string') {
             return res.status(400).json({ error: 'Invalid request body. "chatHistory", "patient", and "diagnosis" are required.' });
         }
+
+        // Detailed validation of input parameters
+        const diagnosisValidation = validateTextField(body.diagnosis, 500);
+        const chatHistoryValidation = validateArray(
+          body.chatHistory,
+          (message: ChatMessage) => validateTextField(message.text, 2000),
+          50
+        );
+
+        // Validate patient profile fields
+        const patientNameValidation = body.patient.name ? validateTextField(body.patient.name, 100) : { isValid: true, errors: [] } as ValidationResult;
+        const patientAgeValidation = body.patient.age ? validateTextField(body.patient.age.toString(), 3) : { isValid: true, errors: [] } as ValidationResult;
+
+        // Combine validation results
+        const validationErrors: string[] = [];
+
+        if (!diagnosisValidation.isValid) {
+          validationErrors.push(...diagnosisValidation.errors);
+        }
+
+        if (!chatHistoryValidation.isValid) {
+          validationErrors.push(...chatHistoryValidation.errors);
+        }
+
+        if (!patientNameValidation.isValid) {
+          validationErrors.push(...patientNameValidation.errors);
+        }
+
+        if (!patientAgeValidation.isValid) {
+          validationErrors.push(...patientAgeValidation.errors);
+        }
+
+        if (validationErrors.length > 0) {
+          return res.status(400).json({
+            error: 'Validation failed',
+            details: validationErrors
+          });
+        }
+
         const { chatHistory, patient, diagnosis } = body as { chatHistory: ChatMessage[], patient: PatientProfile, diagnosis: string };
 
         const prompt = getChatPrompt(chatHistory, patient, diagnosis);

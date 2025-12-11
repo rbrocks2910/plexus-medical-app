@@ -4,6 +4,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
 import { verifyAuth, AuthResult } from './_lib/auth';
 import { rateLimit } from './_lib/rateLimit';
+import {
+  validateUserId,
+  validateAmount,
+  validateCurrency,
+  validatePlan,
+  ValidationResult
+} from './_lib/validation';
 
 // Debug logging to check if environment variables are accessible
 console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
@@ -74,8 +81,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    if (!amount || !userId) {
-      return res.status(400).json({ error: 'Missing amount or userId' });
+    // Validate inputs
+    const userIdValidation = validateUserId(userId);
+    const amountValidation = validateAmount(amount);
+    const currencyValidation = validateCurrency(currency || 'INR');
+    const planValidation = validatePlan(plan || 'premium');
+
+    // Combine validation results
+    const validationErrors: string[] = [];
+
+    if (!userIdValidation.isValid) {
+      validationErrors.push(...userIdValidation.errors);
+    }
+
+    if (!amountValidation.isValid) {
+      validationErrors.push(...amountValidation.errors);
+    }
+
+    if (!currencyValidation.isValid) {
+      validationErrors.push(...currencyValidation.errors);
+    }
+
+    if (!planValidation.isValid) {
+      validationErrors.push(...planValidation.errors);
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validationErrors
+      });
     }
 
     // Generate a shorter unique receipt ID within the 40-character limit

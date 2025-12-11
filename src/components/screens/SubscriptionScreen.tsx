@@ -59,10 +59,16 @@ export const SubscriptionScreen: React.FC = () => {
         return;
       }
 
-      // 2. Create order via backend
+      // 2. Get Firebase ID token for authentication
+      const idToken = await user.getIdToken();
+
+      // Create order via backend with authentication
       const orderRes = await fetch('/api/createRazorpayOrder', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           plan: 'plus',
           amount: 30000, // ₹300 in paise
@@ -94,10 +100,16 @@ export const SubscriptionScreen: React.FC = () => {
         },
         handler: async (response: any) => {
           try {
-            // 4. Verify payment with backend
+            // 4. Get fresh Firebase ID token for verification
+            const idToken = await user.getIdToken();
+
+            // Verify payment with backend with authentication
             const verifyRes = await fetch('/api/verifyRazorpayPayment', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+              },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,

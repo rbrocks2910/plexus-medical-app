@@ -112,15 +112,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         });
 
-        // Update API usage statistics after successful processing
-        try {
-          await FirebaseAdminService.incrementApiUsage(authResult.userId);
-        } catch (usageError) {
-          console.error('Error updating API usage stats:', usageError);
-          // Don't fail the request just because we couldn't update usage stats
+        const result = JSON.parse(response.text || '{}');
+
+        // Update API usage statistics after successful processing, but do it carefully to not affect the response
+        if (authResult.uid) {
+            try {
+                await FirebaseAdminService.incrementApiUsage(authResult.uid);
+            } catch (usageError) {
+                console.error('Error updating API usage stats (non-fatal):', usageError);
+                // Important: Don't let usage tracking errors affect the main API response
+            }
         }
 
-        res.status(200).json(JSON.parse(response.text || '{}'));
+        res.status(200).json(result);
 
     } catch (error) {
         console.error("Error in /api/getCaseFeedback:", error);

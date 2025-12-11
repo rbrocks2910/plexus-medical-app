@@ -152,11 +152,36 @@ export class FirebaseAdminService {
    */
   static async incrementApiUsage(userId: string): Promise<void> {
     try {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
-      const hourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()); // Start of current hour
-      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1); // Start of next hour
+      // First check if the user document exists
+      const userDoc = await db.collection('users').doc(userId).get();
 
+      if (!userDoc.exists) {
+        console.warn(`User document does not exist for user ${userId}, creating with default stats`);
+        // Create user document with default stats if it doesn't exist
+        await db.collection('users').doc(userId).set({
+          usageStats: {
+            apiRequestsToday: 1,
+            apiRequestsThisHour: 1,
+            casesGeneratedToday: 0,
+            casesGeneratedThisWeek: 0,
+            lastCaseGeneratedAt: null,
+            totalCasesGenerated: 0,
+            subscription: {
+              tier: 'free',
+              startDate: admin.firestore.FieldValue.serverTimestamp(),
+              endDate: null,
+              isActive: true,
+              totalCasesUsed: 0,
+              maxTotalCases: 2,
+            }
+          },
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return;
+      }
+
+      // Update existing document with increment operation
       await db.collection('users').doc(userId).update({
         'usageStats.apiRequestsToday': admin.firestore.FieldValue.increment(1),
         'usageStats.apiRequestsThisHour': admin.firestore.FieldValue.increment(1),

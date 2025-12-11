@@ -48,14 +48,19 @@ if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.project
   app = { options: firebaseConfig };
 }
 
-// Check if this is the placeholder object (which has both options property and our custom structure)
-// vs the actual Firebase app object
-const isPlaceholder = app && typeof app.options !== 'undefined' &&
-                     app.options.apiKey !== undefined; // This would be the firebaseConfig in our placeholder
+// Distinguish between our placeholder object and actual Firebase app object
+// Our placeholder: { options: firebaseConfig } - only has options property
+// Firebase app object: has properties like _name, _config, etc.
+const isPlaceholder = app &&
+                     typeof app._name === 'undefined' &&
+                     typeof app._config === 'undefined' &&
+                     typeof app.options !== 'undefined';
 
 const isFirebaseInitialized = app && !isPlaceholder;
 
 console.log('Firebase app object:', app);
+console.log('App has _name property:', '_name' in app);
+console.log('App has _config property:', '_config' in app);
 console.log('App has options property:', 'options' in app);
 console.log('Is placeholder app (failed initialization):', isPlaceholder);
 console.log('Is Firebase properly initialized:', isFirebaseInitialized);

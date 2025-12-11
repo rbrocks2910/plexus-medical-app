@@ -2,15 +2,15 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
-import { verifyAuth, AuthResult } from './_lib/auth';
-import { rateLimit } from './_lib/rateLimit';
+import { verifyAuth, AuthResult } from './_lib/auth.js';
+import { rateLimit } from './_lib/rateLimit.js';
 import {
   validateUserId,
   validateAmount,
   validateCurrency,
   validatePlan,
   ValidationResult
-} from './_lib/validation';
+} from './_lib/validation.js';
 
 // Debug logging to check if environment variables are accessible
 console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);

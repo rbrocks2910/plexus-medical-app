@@ -2,16 +2,16 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { verifyAuth, AuthResult } from './_lib/auth';
-import { rateLimit } from './_lib/rateLimit';
-import { FirebaseAdminService } from './_lib/firebaseAdminService';
+import { verifyAuth, AuthResult } from './_lib/auth.js';
+import { rateLimit } from './_lib/rateLimit.js';
+import { FirebaseAdminService } from './_lib/firebaseAdminService.js';
 import {
   validateRazorpayOrderId,
   validateRazorpayPaymentId,
   validateRazorpaySignature,
   validateUserId,
   ValidationResult
-} from './_lib/validation';
+} from './_lib/validation.js';
 
 // Subscription limits for case generation
 const SUBSCRIPTION_LIMITS = {

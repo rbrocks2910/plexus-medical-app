@@ -178,8 +178,8 @@ export const validateCurrency = (currency: string): ValidationResult => {
  */
 export const validatePlan = (plan: string): ValidationResult => {
   const errors: string[] = [];
-  const validPlans = ['free', 'premium', 'enterprise'];
-  
+  const validPlans = ['free', 'premium', 'enterprise', 'plus'];
+
   if (typeof plan !== 'string') {
     errors.push('Plan must be a string');
   } else if (!plan) {
@@ -187,7 +187,7 @@ export const validatePlan = (plan: string): ValidationResult => {
   } else if (!validPlans.includes(plan)) {
     errors.push(`Plan must be one of: ${validPlans.join(', ')}`);
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors

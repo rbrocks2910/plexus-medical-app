@@ -3,20 +3,27 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users collection - users can only read/write their own data
     match /users/{userId} {
+      // Allow authenticated users to read/write their own user document
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
       // Allow service account (backend functions) to write subscription data
       allow write: if request.auth.token.claims.admin == true;
 
-      // Allow users to read/write their own completed cases
+      // Subcollection for completed cases - users can only access their own
       match /completedCases/{caseId} {
+        // Allow read/write to completed cases only for the document owner
         allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Additional specificity - prevent users from modifying other users' cases
+        // even if the document gets created with wrong userId
+        allow write: if request.auth != null &&
+                      request.auth.uid == userId &&
+                      request.resource.data.userId == userId;
       }
     }
 
-    // Other collections can be added here as needed
+    // Additional security: deny access to any other collections by default
     match /{document=**} {
-      // Deny access to all other collections by default
       allow read, write: if false;
     }
   }

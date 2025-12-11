@@ -48,10 +48,15 @@ if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.project
   app = { options: firebaseConfig };
 }
 
+console.log('Firebase app object:', app);
+console.log('app.options value:', app.options);
+console.log('app.options === undefined:', app.options === undefined);
+console.log('Boolean(app):', Boolean(app));
+console.log('Complete check (app && app.options === undefined):', app && app.options === undefined);
+
 // Check if Firebase was properly initialized by checking the app object structure
 const isFirebaseInitialized = app && app.options === undefined;
 
-console.log('Firebase app object:', app);
 console.log('Is Firebase properly initialized:', isFirebaseInitialized);
 
 // Initialize Firebase Authentication and get a reference to the service

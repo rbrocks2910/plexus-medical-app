@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -26,8 +26,15 @@ console.log('Firebase config loaded:', {
 let app;
 if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
   try {
-    app = initializeApp(firebaseConfig);
-    console.log('Firebase initialized successfully');
+    // Check if Firebase has already been initialized
+    const existingApps = getApps();
+    if (existingApps.length === 0) {
+      app = initializeApp(firebaseConfig);
+      console.log('Firebase app initialized successfully:', app);
+    } else {
+      app = existingApps[0]; // Use existing app
+      console.log('Firebase app already exists, using existing instance:', app);
+    }
   } catch (error) {
     console.error('Error initializing Firebase:', error);
     // Create a placeholder app to prevent other parts of the app from breaking
@@ -36,6 +43,7 @@ if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.project
   }
 } else {
   console.error('Firebase config is incomplete. Missing required values.');
+  console.log('Config values:', firebaseConfig);
   // Create a placeholder for testing when config is missing
   app = { options: firebaseConfig };
 }

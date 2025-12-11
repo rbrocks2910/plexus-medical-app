@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
 import { verifyAuth, AuthResult } from './_lib/auth';
+import { rateLimit } from './_lib/rateLimit';
 
 // Debug logging to check if environment variables are accessible
 console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
@@ -26,6 +27,18 @@ const razorpay = new Razorpay({
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Apply rate limiting - limit to 5 requests per minute per IP for payment creation
+  const rateLimitResult = await rateLimit(req, 60 * 1000, 5); // 5 requests per minute
+  if (!rateLimitResult.allowed) {
+    const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    res.setHeader('Retry-After', retryAfterSeconds.toString());
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: `Too many requests. Please try again in ${retryAfterSeconds} seconds.`,
+      resetTime: rateLimitResult.resetTime
+    });
   }
 
   // Verify authentication

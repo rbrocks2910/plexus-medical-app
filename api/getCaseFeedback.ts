@@ -5,10 +5,22 @@ import { getFeedbackPrompt } from './_lib/prompts.js';
 import { caseFeedbackSchema } from './_lib/schemas.js';
 import { MedicalCase, ChatMessage } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
+import { rateLimit } from './_lib/rateLimit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Only POST requests allowed' });
+    }
+
+    // Apply rate limiting - limit to 20 requests per 5 minutes per authenticated user for feedback generation
+    const rateLimitResult = await rateLimit(req, 5 * 60 * 1000, 20); // 20 requests per 5 minutes
+    if (!rateLimitResult.allowed) {
+        const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+        res.setHeader('Retry-After', retryAfterSeconds.toString());
+        return res.status(429).json({
+            error: 'Rate limit exceeded',
+            message: `Too many requests. Please try again in ${retryAfterSeconds} seconds.`
+        });
     }
 
     // Verify authentication

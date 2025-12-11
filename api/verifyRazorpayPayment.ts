@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { verifyAuth, AuthResult } from './_lib/auth';
+import { rateLimit } from './_lib/rateLimit';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -39,6 +40,17 @@ const SUBSCRIPTION_LIMITS = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  // Apply rate limiting - limit to 3 requests per minute per IP for payment verification
+  const rateLimitResult = await rateLimit(req, 60 * 1000, 3); // 3 requests per minute
+  if (!rateLimitResult.allowed) {
+    const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    res.setHeader('Retry-After', retryAfterSeconds.toString());
+    return res.status(429).json({
+      success: false,
+      message: `Too many requests. Please try again in ${retryAfterSeconds} seconds.`
+    });
   }
 
   // Verify authentication

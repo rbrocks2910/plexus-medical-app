@@ -6,10 +6,22 @@ import { getCaseGenerationPrompt } from './_lib/prompts.js';
 import { medicalCaseSchema } from './_lib/schemas.js';
 import { Specialty, RaritySelection } from './_lib/types.js';
 import { verifyAuth, AuthResult } from './_lib/auth.js';
+import { rateLimit } from './_lib/rateLimit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Only POST requests allowed' });
+    }
+
+    // Apply rate limiting - limit to 10 requests per 5 minutes per authenticated user for case generation
+    const rateLimitResult = await rateLimit(req, 5 * 60 * 1000, 10); // 10 requests per 5 minutes
+    if (!rateLimitResult.allowed) {
+        const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+        res.setHeader('Retry-After', retryAfterSeconds.toString());
+        return res.status(429).json({
+            error: 'Rate limit exceeded',
+            message: `Too many requests. Please try again in ${retryAfterSeconds} seconds.`
+        });
     }
 
     // Verify authentication

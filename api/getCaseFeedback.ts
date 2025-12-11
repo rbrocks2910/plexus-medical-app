@@ -4,10 +4,19 @@ import { ai } from './_lib/ai.js';
 import { getFeedbackPrompt } from './_lib/prompts.js';
 import { caseFeedbackSchema } from './_lib/schemas.js';
 import { MedicalCase, ChatMessage } from './_lib/types.js';
+import { verifyAuth, AuthResult } from './_lib/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Only POST requests allowed' });
+    }
+
+    // Verify authentication
+    const authResult: AuthResult = await verifyAuth(req);
+    if (!authResult.authenticated) {
+        return res.status(401).json({
+            error: 'Unauthorized: Invalid or missing authentication token'
+        });
     }
 
     const body = req.body;

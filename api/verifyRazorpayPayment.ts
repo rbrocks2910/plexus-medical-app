@@ -4,6 +4,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { verifyAuth, AuthResult } from './_lib/auth';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -40,6 +41,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
+  // Verify authentication
+  const authResult: AuthResult = await verifyAuth(req);
+  if (!authResult.authenticated) {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Invalid or missing authentication token'
+    });
+  }
+
   try {
     const {
       razorpay_order_id,
@@ -54,6 +64,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       plan: string;
       userId: string;
     };
+
+    // Verify that the authenticated user matches the userId in the request
+    if (authResult.uid !== userId) {
+      console.error(`User ID mismatch: token UID ${authResult.uid} !== request UID ${userId}`);
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: User ID does not match authenticated user'
+      });
+    }
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId) {
       return res.status(400).json({

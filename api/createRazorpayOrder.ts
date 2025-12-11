@@ -2,6 +2,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
+import { verifyAuth, AuthResult } from './_lib/auth';
 
 // Debug logging to check if environment variables are accessible
 console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
@@ -27,6 +28,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Verify authentication
+  const authResult: AuthResult = await verifyAuth(req);
+  if (!authResult.authenticated) {
+    return res.status(401).json({
+      error: 'Unauthorized: Invalid or missing authentication token'
+    });
+  }
+
   // Check environment variables before processing
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     console.error('Razorpay credentials are missing');
@@ -43,6 +52,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       plan: string;
       userId: string;
     };
+
+    // Verify that the authenticated user matches the userId in the request
+    if (authResult.uid !== userId) {
+      console.error(`User ID mismatch: token UID ${authResult.uid} !== request UID ${userId}`);
+      return res.status(403).json({
+        error: 'Forbidden: User ID does not match authenticated user'
+      });
+    }
 
     if (!amount || !userId) {
       return res.status(400).json({ error: 'Missing amount or userId' });

@@ -64,9 +64,6 @@ export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any):
     createdAt: firestoreUserData.createdAt ? convertTimestampToDate(firestoreUserData.createdAt) as Date :
                firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime) : now,
     lastLoginAt: firebaseUser.metadata.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime) : now,
-    isBanned: firestoreUserData.isBanned || false,
-    banReason: firestoreUserData.banReason,
-    banExpiresAt: convertTimestampToDate(firestoreUserData.banExpiresAt) as Date | undefined,
     usageStats: usageStats,
   };
 };

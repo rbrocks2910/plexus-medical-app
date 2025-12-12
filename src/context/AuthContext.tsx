@@ -72,9 +72,6 @@ const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
     emailVerified: firebaseUser.emailVerified,
     createdAt: firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime) : now,
     lastLoginAt: firebaseUser.metadata.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime) : now,
-    isBanned: false, // This would be checked against a database in production
-    banReason: undefined, // No ban reason for new users
-    banExpiresAt: undefined, // No ban expiration for new users
     usageStats: {
       casesGeneratedToday: 0,
       casesGeneratedThisWeek: 0,

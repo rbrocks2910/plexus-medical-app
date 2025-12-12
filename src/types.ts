@@ -135,9 +135,6 @@ export interface User {
   emailVerified: boolean;
   createdAt: Date;
   lastLoginAt: Date;
-  isBanned: boolean;
-  banReason?: string;
-  banExpiresAt?: Date;
   usageStats: UserUsageStats;
 }
 

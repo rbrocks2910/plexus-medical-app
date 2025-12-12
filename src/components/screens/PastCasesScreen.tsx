@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Timestamp } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { getCompletedCases } from '../../services/firestoreService';
 import { CompletedCase } from '../../services/firestoreService';
@@ -186,7 +187,7 @@ export const PastCasesScreen: React.FC = () => {
                       {completedCase.medicalCase.patient.name}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      {formatDate(completedCase.createdAt?.toDate ? completedCase.createdAt.toDate() : new Date())}
+                      {formatDate(completedCase.createdAt instanceof Timestamp ? completedCase.createdAt.toDate() : new Date())}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">

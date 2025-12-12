@@ -20,7 +20,7 @@ export const convertTimestampToDate = (value: Date | string | Timestamp | undefi
  */
 export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any): User => {
   const now = new Date();
-  
+
   // Convert subscription if it exists, otherwise create a default free subscription
   let subscription: Subscription;
   if (firestoreUserData.subscription) {
@@ -43,7 +43,7 @@ export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any):
       maxTotalCases: 2,
     };
   }
-  
+
   // Convert usage stats
   const usageStats: UserUsageStats = {
     casesGeneratedToday: firestoreUserData.usageStats?.casesGeneratedToday || 0,
@@ -61,10 +61,12 @@ export const convertFirestoreUser = (firestoreUserData: any, firebaseUser: any):
     displayName: firebaseUser.displayName || firestoreUserData.displayName || null,
     photoURL: firebaseUser.photoURL || firestoreUserData.photoURL || null,
     emailVerified: firebaseUser.emailVerified || false,
-    createdAt: firestoreUserData.createdAt ? convertTimestampToDate(firestoreUserData.createdAt) as Date : 
+    createdAt: firestoreUserData.createdAt ? convertTimestampToDate(firestoreUserData.createdAt) as Date :
                firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime) : now,
     lastLoginAt: firebaseUser.metadata.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime) : now,
     isBanned: firestoreUserData.isBanned || false,
+    banReason: firestoreUserData.banReason,
+    banExpiresAt: convertTimestampToDate(firestoreUserData.banExpiresAt) as Date | undefined,
     usageStats: usageStats,
   };
 };

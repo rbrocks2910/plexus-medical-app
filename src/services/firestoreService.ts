@@ -40,6 +40,70 @@ export const getUserSubscription = async (userId: string): Promise<Subscription 
 };
 
 /**
+ * Ban a user with a reason and optional expiration date
+ */
+export const banUser = async (userId: string, reason: string, expiresAt?: Date): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const updateData: any = {
+      isBanned: true,
+      banReason: reason,
+      updatedAt: serverTimestamp()
+    };
+
+    if (expiresAt) {
+      updateData.banExpiresAt = Timestamp.fromDate(expiresAt);
+    }
+
+    await updateDoc(userDocRef, updateData);
+  } catch (error) {
+    console.error('Error banning user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Unban a user
+ */
+export const unbanUser = async (userId: string): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, {
+      isBanned: false,
+      banReason: null,
+      banExpiresAt: null,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user ban information
+ */
+export const getUserBanInfo = async (userId: string): Promise<{ isBanned: boolean; banReason?: string; banExpiresAt?: Date } | null> => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        isBanned: userData.isBanned || false,
+        banReason: userData.banReason,
+        banExpiresAt: userData.banExpiresAt ? (userData.banExpiresAt as Timestamp).toDate() : undefined
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user ban info:', error);
+    throw error;
+  }
+};
+
+/**
  * Create or update user subscription in Firestore
  */
 export const setUserSubscription = async (userId: string, subscription: Subscription): Promise<void> => {
@@ -106,6 +170,9 @@ export const createUserProfile = async (user: User): Promise<void> => {
         displayName: user.displayName,
         photoURL: user.photoURL,
         createdAt: user.createdAt,
+        isBanned: user.isBanned,
+        banReason: user.banReason,
+        banExpiresAt: user.banExpiresAt ? Timestamp.fromDate(user.banExpiresAt) : null,
         subscription: user.usageStats.subscription,
         usageStats: user.usageStats,
         updatedAt: serverTimestamp()
@@ -116,6 +183,9 @@ export const createUserProfile = async (user: User): Promise<void> => {
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
+        isBanned: user.isBanned,
+        banReason: user.banReason,
+        banExpiresAt: user.banExpiresAt ? Timestamp.fromDate(user.banExpiresAt) : null,
         updatedAt: serverTimestamp()
       });
     }

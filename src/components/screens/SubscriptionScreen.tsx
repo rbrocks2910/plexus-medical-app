@@ -270,7 +270,7 @@ export const SubscriptionScreen: React.FC = () => {
 
             <ul className="space-y-4 mb-8 text-left">
               {[
-                'Unlimited Case Generation',
+                
                 'Advanced AI Feedback',
                 'Priority Support',
                 'Detailed Analytics'

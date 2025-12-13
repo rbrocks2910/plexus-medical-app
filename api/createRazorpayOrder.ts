@@ -67,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { amount, currency, plan, userId } = req.body as {
-      amount: number;
+      amount?: number;
       currency: string;
       plan: string;
       userId: string;
@@ -81,17 +81,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Set default amount based on the plan if not provided
+    // Currently, the Plus plan is ₹300 (30000 paise)
+    const planAmounts: Record<string, number> = {
+      'plus': 30000, // ₹300 in paise
+    };
+
+    const finalAmount = amount ?? planAmounts[plan];
+    const finalCurrency = currency || 'INR';
+    const finalPlan = plan || 'plus';
+
     // Validate inputs
     const userIdValidation = validateUserId(userId);
-    const amountValidation = validateAmount(amount);
-    const currencyValidation = validateCurrency(currency || 'INR');
-    const planValidation = validatePlan(plan || 'premium');
+    const amountValidation = validateAmount(finalAmount);
+    const currencyValidation = validateCurrency(finalCurrency);
+    const planValidation = validatePlan(finalPlan);
 
     console.log('Validation results:', {
       userId: { value: userId, validation: userIdValidation },
-      amount: { value: amount, validation: amountValidation },
-      currency: { value: currency, validation: currencyValidation },
-      plan: { value: plan, validation: planValidation }
+      amount: { value: finalAmount, validation: amountValidation },
+      currency: { value: finalCurrency, validation: currencyValidation },
+      plan: { value: finalPlan, validation: planValidation }
     });
 
     // Combine validation results
@@ -127,11 +137,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const receiptId = `receipt_${userIdShort}_${timestamp}`.substring(0, 40); // Ensure total length <= 40
 
     const options = {
-      amount, // in paise (₹300 => 30000)
-      currency: currency || 'INR',
+      amount: finalAmount, // in paise (₹300 => 30000)
+      currency: finalCurrency,
       receipt: receiptId,
       notes: {
-        plan,
+        plan: finalPlan,
         userId,
       },
     };
